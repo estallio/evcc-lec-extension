@@ -121,7 +121,7 @@ async function gen() {
         0, 90, 180, 270, 0,
     ]
     for (let i = 1; i <= 1; i++) {
-        for (let j = 1; j <= 1; j++) {
+        for (let j = 1; j <= 3; j++) {
             count += 1
             let hh = await hhObject(count,
                 web_port++,

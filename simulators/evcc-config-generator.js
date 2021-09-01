@@ -113,7 +113,7 @@ for (const household of householdsConfig) {
                     },
                     timeout: "10s"
                 },
-                capacity: household.evs[0].batterySizeInKWh,
+                capacity: household.batteries[0].batterySizeInKWh,
 
             }
         ]
@@ -122,7 +122,7 @@ for (const household of householdsConfig) {
         name: "vehicle1",
         title: "Vehicle 1",
         type: "custom",
-        capacity: household.batteries[0].batterySizeInKWh,
+        capacity: household.evs[0].batterySizeInKWh,
         soc: {
             source: "http",
             uri: `http://localhost:${household.evs[0].port}/vehicle/soc`,
