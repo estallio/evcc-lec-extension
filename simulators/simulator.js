@@ -1,30 +1,67 @@
+import moment from 'moment';
+
 import config from './simulation-configs.js';
 import Battery from './battery-simulator.js';
 import PV from './pv-simulator.js';
 import Consumption from './consumption-simulator.js';
 
-const { households } = config; 
+const { households: householdsConfig } = config; 
 
-// haushalt-verbrauch (fix) -> pv-produktion (fix) -> batterie -> ev
-// 1. simulator triggered haus und sagt gib mir deinen verbrauch
-// 2. simulator holt sich pv produktion
-// 3. simulator triggered batterie mit der residual energy (mehrere batterien werden wie eine batterie gehandhabt)
-// 4. batterie sendet die residual energy, die in das netz eingespeist wird
+const households = [];
 
-for (const house of households) {
+// setup all households from config file
+for (const householdConfig of householdsConfig) {
     
-    const pv = new PV(house.pvs[0]);
+    const household = {};
 
-    const consumption = new Consumption(house.consumption[0]);
+    household.consumptions = [];
+    for (const consumptionConfig of householdConfig.consumptions) {
+        const consumption = new Consumption(consumptionConfig);
+        household.consumptions.push(consumption);
+    }
 
-    for (let i = 0; i < 1000; i++)
-        console.log(consumption.update(60));
+    household.pvs = [];
+    for (const pvConfig of householdConfig.pvs) {
+        const pv = new PV(pvConfig);
+        household.pvs.push(pv);
+    }
 
-    const battery = new Battery(house.batteries[0]);
+    household.batteries = [];
+    for (const batteryConfig of householdConfig.batteries) {
+        const battery = new Battery(batteryConfig);
+        household.batteries.push(battery);
+    }
+}
 
-    console.log('battery soc: ', battery.SoCInKWh);
-    console.log(battery.update(3600, 15));
-    console.log('battery soc: ', battery.SoCInKWh);
-    console.log(battery.update(3600, -15));
-    console.log('battery soc: ', battery.SoCInKWh);
+const simulationTime = moment('2021-09-01T00:00:00');
+
+// simulation loop
+for (let i = 0; i < 7 * 24 * 60; i++) {
+    simulationTime.add(60, 'seconds');
+
+    console.log(simulationTime.toDate());
+
+    for (const household of households) {
+        let residualEnergyInKWh = 0;
+
+        // consumption and pv production are fixed and can not be changed
+        // for this reason, we get the consumption and production data first and secondly give the battery the chance to charge
+        // this strategy neglects the ev charging at first and priorizes the battery charging
+        // the ev charging strategy is the job of evcc
+
+        for (const consumption of household.consumptions) {
+            residualEnergyInKWh += consumption.update(60);
+            const consumptionPower = consumption.getCurrentPower();
+        }
+
+        for (const pv of household.pvs) {
+            residualEnergyInKWh += pv.update(60);
+            const pvPower = pv.getCurrentPower();
+        }
+
+        for (const battery of household.batteries) {
+            residualEnergyInKWh += battery.update(60);
+            const batteryPower = battery.getCurrentPower();
+        }
+    }
 }

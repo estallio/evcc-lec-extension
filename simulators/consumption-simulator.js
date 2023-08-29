@@ -31,8 +31,12 @@ export default class Consumption {
 
         const consumedEnergy = (leftValue + rightValue) / 2 * (timespan / 3600);
 
-        this.currentConsumption = consumedEnergy / (timespan / 3600);
+        this.currentConsumption = -(consumedEnergy / (timespan / 3600));
 
-        return consumedEnergy;
+        return -consumedEnergy;
+    }
+
+    getCurrentPower() {
+        return this.currentConsumption;
     }
 }

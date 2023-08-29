@@ -24,7 +24,7 @@ export default {
                 dischargingEfficiency: 0.92,
                 port: 9004
             }],
-            consumption: [{
+            consumptions: [{
                 file: 'consumption_values/House_1-HH_1.json',
                 port: 9005
             }]

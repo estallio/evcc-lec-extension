@@ -8,6 +8,8 @@ export default class Battery {
         this.dischargingEfficiency = config.dischargingEfficiency;
 
         this.SoCInKWh = 0;
+
+        this.currentPower = 0;
     }
 
     update(timespan, residualEnergyInKWh) {
@@ -40,9 +42,13 @@ export default class Battery {
                 // set battery fully loaded
                 this.SoCInKWh = this.batterySizeInKWh;
 
+                this.currentPower = (-chargedEnergy + chargingSaldo) / (timespan / 3600);
+
                 return residualEnergyInKWh - chargedEnergy + chargingSaldo;
             }
     
+            this.currentPower = -chargedEnergy / (timespan / 3600);
+
             // otherwise, we simply needed all of the produced energy for the battery
             return residualEnergyInKWh - chargedEnergy;
         } else {
@@ -74,12 +80,20 @@ export default class Battery {
                 // battery is empty
                 this.SoCInKWh = 0;
 
+                this.currentPower = (dischargedEnergy + dischargingSaldo) / (timespan / 3600);
+
                 return residualEnergyInKWh + dischargedEnergy + dischargingSaldo;
             }
     
+            this.currentPower = dischargedEnergy / (timespan / 3600);
+
             // otherwise, we simly delivered all of the needed energy from the battery
             return residualEnergyInKWh + dischargedEnergy;;
         }
+    }
+
+    getCurrentPower() {
+        return this.currentPower;
     }
 }
     

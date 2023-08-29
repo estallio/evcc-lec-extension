@@ -38,4 +38,8 @@ export default class PV {
 
         return producedEnergy;
     }
+
+    getCurrentPower() {
+        return this.currentProduction;
+    }
 }
