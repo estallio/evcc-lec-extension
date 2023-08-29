@@ -3,7 +3,7 @@ export default {
     {
       name: 'Household 1',
       pvs: [{
-        file: './production_values/pv_sim_export_4000_0_45.json',
+        file: './production_values/pv_sim_export_6000_180_45.json',
         port: 9001
       }],
       evs: [{
@@ -24,16 +24,16 @@ export default {
         dischargingEfficiency: 0.92,
         port: 9004
       }],
-      consumption: [{
+      consumptions: [{
         file: 'consumption_values/House_1-HH_1.json',
         port: 9005
       }],
-      influx: [{
+      influx: {
         url: "http://localhost:8086",
         bucket: "sim",
-        token: "IwNUpz2WP7Mzz3enDoPkckFAJVaw1O6vBT3QOj0STk9P5KSUZkwVYkHyWahzML7RDzFApm6xjdoX3VoK80G0Lg==",
+        token: "zkF_MBAO4dcMB65cSmgz8LBmow7dUYa38iQtXmo9mAOR6Yw4oEGINN1I8PFNapL-3E4tNR9ABSZIT5XhZjcLyQ==",
         org: "home"
-      }]
+      }
     }
   ]
 };
