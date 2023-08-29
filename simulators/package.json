@@ -12,6 +12,7 @@
   "dependencies": {
     "@influxdata/influxdb-client": "^1.33.2",
     "express": "^4.18.2",
+    "js-yaml": "^4.1.0",
     "moment": "^2.29.4"
   }
 }
