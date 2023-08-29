@@ -7,9 +7,13 @@ export default {
         port: 9001
       }],
       evs: [{
-        batteryInKWh: 50,
-        averageConsumptionPer100KM: 16,
+        chargingEfficiency: 0.95,
         maxChargeRateInKW: 22,
+        batterySizeInKWh: 50,
+        averageConsumptionPer100KM: 16,
+        initialSoCInKWh: 20,
+        locationFile: './car_values/House 2 1/Results/CarLocation.Car 2, 22kW Charging Power, avg. Speed 30 km h.HH1.json',
+        distanceFile: './car_values/House 2 1/Results/DrivingDistance.Car 2, 22kW Charging Power, avg. Speed 30 km h.HH1.json',
         port: 9002
       }],
       wallboxes: [{

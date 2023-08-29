@@ -1,97 +1,174 @@
-const batterySizeInKWh = 50; // in kWh
-const typicalConsumptionInKWh = 16; // kWh/100 KM
-const maxChargeRateInKW = 22; // in kW
-const chargingEfficiency = 0.95;
+// chargers properties
+// status: string - A..F
+// enabled: bool - true/false
+// enable: function - true/false
+// maxcurrent: function - int (A)
 
-let SoC = 0; // in kWh
+// meters properties
+// power: W
 
-// gibt die wallbox zurück
-let status = 'C'; // C=laden möglich; A=nicht angesteckt und kein laden möglich, mehr: https://evsim.gonium.net/#der-control-pilot-cp und https://evsim.gonium.net/#der-control-pilot-cp
+import express from 'express';
+import fs from 'fs';
+import Smooth from './utils/Smooth.js';
 
-// ev loads whatever wallbox delivers
+// charger-config: https://github.com/evcc-io/evcc/blob/b28c7b516bf41662fec2c5e7632ecf99afaccf93/cmd/demo.yaml#L128
+// car-config: https://github.com/evcc-io/evcc/blob/b28c7b516bf41662fec2c5e7632ecf99afaccf93/cmd/demo.yaml#L128
+// wallbox-meter-config: https://github.com/evcc-io/evcc/blob/b28c7b516bf41662fec2c5e7632ecf99afaccf93/cmd/demo.yaml#L128
 
-const update = (timespan, chargeRateInKW) => {
-    if (residualEnergyInKWh >= 0) {
-        // if battery can be charged with the surplus from PV
+export default class EV {
+    constructor(config) {
+        this.port = config.port;
 
-        // calculate the average production of the surplus to know if its at least possible to load the battery with the amount of kW
-        let averageProductionInKW = residualEnergyInKWh / timespan * 3600;
+        this.locationFile = config.locationFile;
+        this.rawLocationData = fs.readFileSync(this.locationFile);
+        this.locationData = JSON.parse(this.rawLocationData);
 
-        // trim the charging power if the average production was higher than the max. charge rate of the battery
-        if (averageProductionInKW > maxChargeRateInKW) {
-            averageProductionInKW = maxChargeRateInKW;
-        }
-    
-        // calculate back the possible energy the battery is able to charge
-        const chargedEnergy = averageProductionInKW * timespan / 3600;
+        this.distanceFile = config.distanceFile;
+        this.rawDistanceData = fs.readFileSync(this.distanceFile);
+        this.distanceData = JSON.parse(this.rawDistanceData);
 
-        // charge the battery with a small amount of loss
-        SoC += chargedEnergy * chargingEfficiency;
+        this.timeResolution = this.distanceData.TimeResolution;
+        const timeResolutionStrings = this.timeResolution.split(':');
+        this.intervalInSeconds = (((parseInt(timeResolutionStrings[0]) * 60) + parseInt(timeResolutionStrings[1])) * 60) + parseInt(timeResolutionStrings[2]);
 
-        // we can not charge more than the actual capacity of the battery
-        if (SoC > batterySizeInKWh) {
+        this.distanceValues = this.distanceData.Values;
+        this.locationValues = this.locationData.Values;
 
-            // set battery fully loaded
-            SoC = batterySizeInKWh;
-            
-            // saldo is passed is fed into the grid
-            const chargingSaldo = SoC - batterySizeInKWh;
+        // simulation provides distances in m in the given timespan - calculate back to km/h
+        this.speed = this.distanceValues.map(value => value / 1000 / (this.intervalInSeconds / 3600));
 
-            // calculate back the battery efficiency of the saldo
-            chargingSaldo /= chargingEfficiency;
+        this.smoothFunction = Smooth(this.speed);
+        this.currentSeconds = 0;
 
-            next(timespan, chargingSaldo, next);
-        }
-
-        // otherwise, we simly needed all of the produced energy for the battery
-        next(timespan, 0, next);
-    } else {
-        // battery is drained
+        // charger-related variables
+        this.status = 'A';
+        this.enabled = false;
+        this.maxCurrent = 16;
+        this.currentPhases = 1;
         
-        // calculate the average consumption to know if its at least possible to discharge the battery with the amount of kW
-        let averageConsumptionInKW = -residualEnergyInKWh / timespan * 3600;
+        // meter-related variables
+        this.currentPower = 0;
 
-        // trim the discharging power if the average consumption was higher than the max. discharge rate of the battery
-        if (averageConsumptionInKW > maxDischargeRateInKW) {
-            averageConsumptionInKW = maxDischargeRateInKW;
-        }
-    
-        // calculate back the possible energy the battery is able to discharge
-        const dischargedEnergy = averageConsumptionInKW * timespan / 3600;
+        // car-related variables
+        this.SoCInKWh = config.initialSoCInKWh;
+        this.averageConsumptionPer100KM = config.averageConsumptionPer100KM;
+        this.batterySizeInKWh = config.batterySizeInKWh;
+        this.maxChargeRateInKW = config.maxChargeRateInKW;
+        this.chargingEfficiency = config.chargingEfficiency;
+        this.range = this.SoCInKWh / this.averageConsumptionPer100KM * 100;
 
-        // discharge the battery with a small amount of loss
-        SoC -= dischargedEnergy * dischargingEfficiency;
+        const app = express();
+        
+        app.get('/charger/status', (req, res) => {
+            res.json(this.status);
+        });
+        
+        app.get('/charger/enabled', (req, res) => {
+            res.json(this.enabled);
+        });
 
-        // we can not discharge more than the battery delivers
-        if (SoC < 0) {
+        app.post('/charger/enable', (req, res) => {
+            this.enabled = !!req.query.enabled;
+            res.json(this.enabled);
+        });
 
-            // battery is empty
-            SoC = 0;
-            
-            // saldo is consumed from grid
-            const dischargingSaldo = SoC;
+        app.get('/charger/maxcurrent', (req, res) => {
+            res.json(this.maxCurrent);
+        });
 
-            // calculate back the discharging efficiency
-            dischargingSaldo /= dischargingEfficiency;
+        app.post('/charger/maxcurrent', (req, res) => {
+            this.maxCurrent = parseInt(req.query.maxcurrent);
+            res.json(this.maxCurrent);
+        });
 
-            next(timespan, dischargingSaldo, next);
-        }
+        app.get('/charger/currentPhases', (req, res) => {
+            res.json(this.currentPhases);
+        });
 
-        // otherwise, we simly delivered all of the needed energy from the battery
-        next(timespan, 0, next);
+        app.post('/charger/currentPhases', (req, res) => {
+            this.currentPhases = parseInt(req.query.currentphases);
+            res.json(this.currentPhases);
+        });
+
+        app.get('/meter/currentpower', (req, res) => {
+            res.json(this.currentPower);
+        });
+
+        app.get('/vehicle/soc', (req, res) => {
+            res.json(this.SoCInKWh / this.batterySizeInKWh);
+        });
+
+        app.get('/vehicle/status', (req, res) => {
+            res.json(this.status);
+        });
+
+        app.listen(this.port);
     }
-};
 
-/*
-// evcc settings:
-// https://docs.evcc.io/docs/devices/meters/#generische-unterst%C3%BCtzung
-meters:
-  - name: my_meter
-    type: custom
-    power: # power (W)
-      source: # plugin type
-      # ...
-    soc: # optional battery soc (%)
-      source: # plugin type
-      # ...
- */
+    update(timespan) {
+        const leftIndex = this.currentSeconds / this.intervalInSeconds;
+        const rightIndex = (this.currentSeconds + timespan) / this.intervalInSeconds;
+
+        // location = null when car is driving
+        const location = this.locationValues[Math.floor((this.currentSeconds + timespan) / this.intervalInSeconds)];
+
+        const leftValue = this.smoothFunction(leftIndex);
+        const rightValue = this.smoothFunction(rightIndex);
+
+        const distance = (leftValue + rightValue) / 2 / 3600 * timespan;
+
+        // reduce SoCInKWh - what if the battery is empty and the car not at home?
+        this.SoCInKWh = this.SoCInKWh - (distance * (this.averageConsumptionPer100KM / 100));
+        this.range = this.SoCInKWh / this.averageConsumptionPer100KM * 100;
+
+        if (distance === 0 && location === 'Home' && this.status === 'A') {
+            // ready for charging if not already plugged in
+            this.status = 'C';
+        } else if ((distance !== 0 || location !== 'Home') && this.status !== 'A') {
+            // car not at home or driving - unplug if connected
+            this.enabled = false;
+            this.status = 'A';
+        }
+
+        this.currentSeconds += timespan;
+
+        if (this.status === 'C' && this.enabled) {
+            // charge car with charging rate in kW
+            let chargingRate = this.maxCurrent * 230 / 1000;
+
+            if (this.currentPhases === 3) {
+                chargingRate = this.maxCurrent * 400 * Math.sqrt(3) / 1000;
+            }
+        
+            const chargedEnergy = chargingRate * timespan / 3600;
+    
+            // charge the battery with a small amount of loss
+            this.SoCInKWh += chargedEnergy * this.chargingEfficiency;
+
+            // we can not charge more than the actual size of the battery
+            if (this.SoCInKWh > this.batterySizeInKWh) {
+                
+                // saldo is calculated back
+                let chargingSaldo = this.SoCInKWh - this.batterySizeInKWh;
+    
+                // calculate back the battery efficiency of the saldo
+                chargingSaldo /= this.chargingEfficiency;
+    
+                // set battery fully loaded
+                this.SoCInKWh = this.batterySizeInKWh;
+
+                this.currentPower = (-chargedEnergy + chargingSaldo) / (timespan / 3600);
+
+                return -chargedEnergy + chargingSaldo;
+            }
+    
+            this.currentPower = -chargedEnergy / (timespan / 3600);
+
+            return chargedEnergy;
+        }
+
+        return 0;
+    }
+}
+
+

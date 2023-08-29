@@ -1,4 +1,4 @@
-import {InfluxDB, Point} from '@influxdata/influxdb-client'
+import { InfluxDB, Point } from '@influxdata/influxdb-client'
 
 export default class InfluxWrite {
     constructor(config) {
