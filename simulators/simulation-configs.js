@@ -3,7 +3,7 @@ export default {
     {
       name: 'Household 1',
       pvs: [{
-        file: './production_values/pv_sim_export_6000_180_45.json',
+        file: './production_values/pv_sim_export_4000_0_45.json',
         port: 9001
       }],
       evs: [{
@@ -18,6 +18,7 @@ export default {
       }],
       batteries: [{
         batterySizeInKWh: 10,
+        initSoCinKWh: 8,
         maxDischargeRateInKW: 5,
         maxChargeRateInKW: 4,
         chargingEfficiency: 0.95,

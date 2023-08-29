@@ -69,9 +69,16 @@ import InfluxWrite from "./influx-write.js";
             }
 
             for (const battery of household.batteries) {
-                residualEnergyInKWh += battery.update(60);
+                residualEnergyInKWh = battery.update(60, residualEnergyInKWh);
                 const batteryPower = battery.getCurrentPower();
+                const batterySoC = battery.getCurrentSoC();
+                await household.infux.updateDB("bat1", "Battery_Meter", "power", batteryPower, simulationTime.toDate())
+                await household.infux.updateDB("bat1", "Battery_Meter", "soc", batterySoC, simulationTime.toDate())
+
             }
+            await household.infux.updateDB("resid", "Residual_Meter", "energy", residualEnergyInKWh, simulationTime.toDate())
+            await household.infux.updateDB("resid", "Residual_Meter", "power", residualEnergyInKWh/(60 / 3600), simulationTime.toDate())
+
         }
     }
 })()
