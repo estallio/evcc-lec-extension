@@ -15,7 +15,7 @@ export default class Battery {
             // if battery can be charged with the surplus from PV
     
             // calculate the average production of the surplus to know if its at least possible to load the battery with the amount of kW
-            let averageProductionInKW = residualEnergyInKWh / timespan * 3600;
+            let averageProductionInKW = residualEnergyInKWh / (timespan / 3600);
     
             // trim the charging power if the average production was higher than the max. charge rate of the battery
             if (averageProductionInKW > this.maxChargeRateInKW) {
@@ -49,7 +49,7 @@ export default class Battery {
             // battery is drained
             
             // calculate the average consumption to know if its at least possible to discharge the battery with the amount of kW
-            let averageConsumptionInKW = -residualEnergyInKWh / timespan * 3600;
+            let averageConsumptionInKW = -residualEnergyInKWh / (timespan / 3600);
 
             // trim the discharging power if the average consumption was higher than the max. discharge rate of the battery
             if (averageConsumptionInKW > this.maxDischargeRateInKW) {

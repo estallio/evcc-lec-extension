@@ -1,4 +1,5 @@
 import fs from 'fs';
+import Smooth from './utils/Smooth.js';
 
 export default class PV {
     constructor(config) {
@@ -7,134 +8,34 @@ export default class PV {
         this.rawPvData = fs.readFileSync(this.file);
         this.pvData = JSON.parse(this.rawPvData);
 
-        this.azimuth = this.pvData.azimuth;
-        this.tilt = this.pvData.tilt;
-        this.interval = this.pvData.timeResolution;
+        this.azimuth = this.pvData.Azimuth;
+        this.tilt = this.pvData.Tilt;
+        this.timeResolution = this.pvData.TimeResolution;
+        const timeResolutionStrings = this.timeResolution.split(':');
+        this.intervalInSeconds = (((parseInt(timeResolutionStrings[0]) * 60) + parseInt(timeResolutionStrings[1])) * 60) + parseInt(timeResolutionStrings[2]);
         this.kWp = this.pvData.kWp;
-        
+
         this.pvValues = this.pvData.Values;
 
-        this.lastUpdate = 0;
-        this.index = 0;
-        this.currentValue = this.pvValues[this.index];
+        this.smoothFunction = Smooth(this.pvValues);
+        this.currentSeconds = 0;
+
+        this.currentProduction = 0;
     }
 
     update(timespan) {
-        const nextValue = 
+        const leftIndex = this.currentSeconds / this.intervalInSeconds;
+        const rightIndex = (this.currentSeconds + timespan) / this.intervalInSeconds;
+
+        const leftValue = this.smoothFunction(leftIndex);
+        const rightValue = this.smoothFunction(rightIndex);
+
+        this.currentSeconds += timespan;
+
+        const producedEnergy = (leftValue + rightValue) / 2 * (timespan / 3600);
+
+        this.currentProduction = producedEnergy / (timespan / 3600);
+
+        return producedEnergy;
     }
 }
-    
-
-
-
-
-    /*
-    // evcc settings:
-    // https://docs.evcc.io/docs/devices/meters/#generische-unterst%C3%BCtzung
-    meters:
-      - name: my_meter
-        type: custom
-        power: # power (W)
-          source: # plugin type
-          # ...
-        soc: # optional battery soc (%)
-          source: # plugin type
-          # ...
-     */
-
-
-// const batterySizeInKWh = 10; // in kWh
-// const maxDischargeRateInKW = 5; // in kW
-// const maxChargeRateInKW = 4; // in kW
-// const chargingEfficiency = 0.97;
-// const dischargingEfficiency = 0.96;
-
-// let SoC = 0; // in kWh
-
-const setup = (config) => {
-    const app = express();
-    const port = config.port;
-
-    app.get('/', (req, res) => {
-        res.send('Hello World!')
-    });
-
-    app.listen(port, () => {
-        console.log(`Example app listening on port ${port}`)
-    });
-};
-
-// timespan in seconds
-// consumption in kWh
-// production in kWh
-const update = (timespan, residualEnergyInKWh, next) => {
-    if (residualEnergyInKWh >= 0) {
-        // if battery can be charged with the surplus from PV
-
-        // calculate the average production of the surplus to know if its at least possible to load the battery with the amount of kW
-        let averageProductionInKW = residualEnergyInKWh / timespan * 3600;
-
-        // trim the charging power if the average production was higher than the max. charge rate of the battery
-        if (averageProductionInKW > maxChargeRateInKW) {
-            averageProductionInKW = maxChargeRateInKW;
-        }
-    
-        // calculate back the possible energy the battery is able to charge
-        const chargedEnergy = averageProductionInKW * timespan / 3600;
-
-        // charge the battery with a small amount of loss
-        SoC += chargedEnergy * chargingEfficiency;
-
-        // we can not charge more than the actual capacity of the battery
-        if (SoC > batterySizeInKWh) {
-
-            // set battery fully loaded
-            SoC = batterySizeInKWh;
-            
-            // saldo is passed is fed into the grid
-            const chargingSaldo = SoC - batterySizeInKWh;
-
-            // calculate back the battery efficiency of the saldo
-            chargingSaldo /= chargingEfficiency;
-
-            next(timespan, chargingSaldo, next);
-        }
-
-        // otherwise, we simly needed all of the produced energy for the battery
-        next(timespan, 0, next);
-    } else {
-        // battery is drained
-        
-        // calculate the average consumption to know if its at least possible to discharge the battery with the amount of kW
-        let averageConsumptionInKW = -residualEnergyInKWh / timespan * 3600;
-
-        // trim the discharging power if the average consumption was higher than the max. discharge rate of the battery
-        if (averageConsumptionInKW > maxDischargeRateInKW) {
-            averageConsumptionInKW = maxDischargeRateInKW;
-        }
-    
-        // calculate back the possible energy the battery is able to discharge
-        const dischargedEnergy = averageConsumptionInKW * timespan / 3600;
-
-        // discharge the battery with a small amount of loss
-        SoC -= dischargedEnergy * dischargingEfficiency;
-
-        // we can not discharge more than the battery delivers
-        if (SoC < 0) {
-
-            // battery is empty
-            SoC = 0;
-            
-            // saldo is consumed from grid
-            const dischargingSaldo = SoC;
-
-            // calculate back the discharging efficiency
-            dischargingSaldo /= dischargingEfficiency;
-
-            next(timespan, dischargingSaldo, next);
-        }
-
-        // otherwise, we simly delivered all of the needed energy from the battery
-        next(timespan, 0, next);
-    }
-};
