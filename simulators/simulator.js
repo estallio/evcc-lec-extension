@@ -12,7 +12,7 @@ import InfluxWrite from "./influx-write.js";
 
     const households = [];
 
-// setup all households from config file
+    // setup all households from config file
     for (const householdConfig of householdsConfig) {
 
         const household = {};
@@ -48,7 +48,7 @@ import InfluxWrite from "./influx-write.js";
 
     const simulationTime = moment('2021-09-01T00:00:00');
 
-// simulation loop
+    // simulation loop
     for (let i = 0; i < 7 * 24 * 60; i++) {
         simulationTime.add(60, 'seconds');
 
@@ -56,6 +56,7 @@ import InfluxWrite from "./influx-write.js";
 
         for (const household of households) {
             let residualEnergyInKWh = 0;
+
             // consumption and pv production are fixed and can not be changed
             // for this reason, we get the consumption and production data first and secondly give the battery the chance to charge
             // this strategy neglects the ev charging at first and priorizes the battery charging
@@ -88,11 +89,10 @@ import InfluxWrite from "./influx-write.js";
             await household.infux.updateDB("resid", "Residual_Meter", "energy", residualEnergyInKWh, simulationTime.toDate())
             await household.infux.updateDB("resid", "Residual_Meter", "power", residualEnergyInKWh/(60 / 3600), simulationTime.toDate())
 
-        }
-
-        for (const ev of household.evs) {
-            const chargingConsumption = ev.update(60);
-            console.log(chargingConsumption);
+            for (const ev of household.evs) {
+                const chargingConsumption = ev.update(60);
+                // console.log(chargingConsumption);
+            }
         }
     }
 })();
