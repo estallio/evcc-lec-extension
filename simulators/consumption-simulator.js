@@ -14,6 +14,9 @@ export default class Consumption {
 
         this.consumptionValues = this.consumptionData.Values;
 
+        // simulation provides consumption in kWh in the given timespan - calculate back to kW
+        this.consumptionValues = this.consumptionValues.map(value => value / (this.intervalInSeconds / 3600));
+
         this.smoothFunction = Smooth(this.consumptionValues);
         this.currentSeconds = 0;
 

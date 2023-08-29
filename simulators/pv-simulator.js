@@ -27,8 +27,9 @@ export default class PV {
         const leftIndex = this.currentSeconds / this.intervalInSeconds;
         const rightIndex = (this.currentSeconds + timespan) / this.intervalInSeconds;
 
-        const leftValue = this.smoothFunction(leftIndex);
-        const rightValue = this.smoothFunction(rightIndex);
+        // simulation provides power data in W, we calculate in kW - divide by 1000
+        const leftValue = this.smoothFunction(leftIndex) / 1000;
+        const rightValue = this.smoothFunction(rightIndex) / 1000;
 
         this.currentSeconds += timespan;
 

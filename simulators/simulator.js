@@ -31,6 +31,8 @@ for (const householdConfig of householdsConfig) {
         const battery = new Battery(batteryConfig);
         household.batteries.push(battery);
     }
+
+    households.push(household);
 }
 
 const simulationTime = moment('2021-09-01T00:00:00');
