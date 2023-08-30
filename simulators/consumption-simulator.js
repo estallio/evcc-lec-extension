@@ -1,9 +1,11 @@
 import fs from 'fs';
 import Smooth from './utils/Smooth.js';
+import express from 'express';
 
 export default class Consumption {
     constructor(config) {
         this.file = config.file;
+
 
         this.rawConsumptionData = fs.readFileSync(this.file);
         this.consumptionData = JSON.parse(this.rawConsumptionData);
@@ -21,6 +23,17 @@ export default class Consumption {
         this.currentSeconds = 0;
 
         this.currentConsumption = 0;
+
+        this.port = config.port
+        const app = express();
+
+        app.get('/meter/currentconsumption', (req, res) => {
+            res.json(this.currentConsumption);
+        });
+
+        app.listen(this.port, () => {
+            console.log(`consumption simulator listening on port ${this.port}`);
+        })
     }
 
     update(timespan) {
