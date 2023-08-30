@@ -30,7 +30,7 @@ export default class Battery {
     });
 
     app.listen(this.port, () => {
-      console.log(`consumption simulator listening on port ${this.port}`);
+      console.log(`battery simulator listening on port ${this.port}`);
     })
   }
 

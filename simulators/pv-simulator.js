@@ -31,7 +31,7 @@ export default class PV {
         });
 
         app.listen(this.port, () => {
-          console.log(`consumption simulator listening on port ${this.port}`);
+          console.log(`pv simulator listening on port ${this.port}`);
         })
     }
 

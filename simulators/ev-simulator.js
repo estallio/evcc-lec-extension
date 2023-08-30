@@ -10,6 +10,7 @@
 import express from 'express';
 import fs from 'fs';
 import Smooth from './utils/Smooth.js';
+import bodyParser from "body-parser";
 
 // charger-config: https://github.com/evcc-io/evcc/blob/b28c7b516bf41662fec2c5e7632ecf99afaccf93/cmd/demo.yaml#L128
 // car-config: https://github.com/evcc-io/evcc/blob/b28c7b516bf41662fec2c5e7632ecf99afaccf93/cmd/demo.yaml#L128
@@ -58,9 +59,12 @@ export default class EV {
         this.range = this.SoCInKWh / this.averageConsumptionPer100KM * 100;
 
         const app = express();
+        //app.use(bodyParser.json({type: 'application/json'}))
+        app.use(bodyParser.text())
 
-        app.get('/charger/status', (req, res) => {
-            res.json(this.status);
+
+      app.get('/charger/status', (req, res) => {
+            res.send(this.status); //Does not want a JSON response for some reason
         });
 
         app.get('/charger/enabled', (req, res) => {
@@ -68,7 +72,11 @@ export default class EV {
         });
 
         app.post('/charger/enable', (req, res) => {
-            this.enabled = !!req.query.enabled;
+            this.enabled = req.body === "true";
+            console.log("==========status current========")
+            console.dir(req.body)
+            console.log(this.enabled)
+            console.log("================================")
             res.json(this.enabled);
         });
 
@@ -77,7 +85,7 @@ export default class EV {
         });
 
         app.post('/charger/maxcurrent', (req, res) => {
-            this.maxCurrent = parseInt(req.query.maxcurrent);
+            this.maxCurrent = parseInt(req.body);
             res.json(this.maxCurrent);
         });
 
@@ -91,7 +99,7 @@ export default class EV {
         });
 
         app.get('/meter/currentpower', (req, res) => {
-            res.json(this.currentPower);
+            res.json(-this.currentPower);
         });
 
         app.get('/vehicle/soc', (req, res) => {
@@ -99,14 +107,16 @@ export default class EV {
         });
 
         app.get('/vehicle/status', (req, res) => {
-            res.json(this.status);
+            res.send(this.status); //Does not want a JSON response for some reason
         });
 
         app.get('/vehicle/range', (req, res) => {
           res.json(this.range);
         });
 
-        app.listen(this.port);
+        app.listen(this.port, () => {
+          console.log(`ev simulator listening on port ${this.port}`);
+        })
     }
 
     update(timespan) {

@@ -7,6 +7,10 @@ import Consumption from './consumption-simulator.js';
 import EV from './ev-simulator.js';
 import InfluxWrite from "./influx-write.js";
 
+function Sleep(milliseconds) {
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+
 (async () => {
     const {households: householdsConfig} = config;
 
@@ -52,7 +56,7 @@ import InfluxWrite from "./influx-write.js";
     for (let i = 0; i < 7 * 24 * 60; i++) {
         simulationTime.add(60, 'seconds');
 
-        // console.log(simulationTime.toDate());
+        console.log(simulationTime.toDate());
 
         for (const household of households) {
             let residualEnergyInKWh = 0;
@@ -66,14 +70,14 @@ import InfluxWrite from "./influx-write.js";
                 residualEnergyInKWh += consumption.update(60);
                 const consumptionPower = consumption.getCurrentPower();
 
-                await household.infux.updateDB("sm1", "Smart_Meter_Reading", "power", consumptionPower, simulationTime.toDate())
+                //await household.infux.updateDB("sm1", "Smart_Meter_Reading", "power", consumptionPower, simulationTime.toDate())
             }
 
             for (const pv of household.pvs) {
                 residualEnergyInKWh += pv.update(60);
                 const pvPower = pv.getCurrentPower();
 
-                await household.infux.updateDB("pv1", "PV_Inverter_Reading", "power", pvPower, simulationTime.toDate())
+                //await household.infux.updateDB("pv1", "PV_Inverter_Reading", "power", pvPower, simulationTime.toDate())
             }
 
             for (const battery of household.batteries) {
@@ -81,18 +85,22 @@ import InfluxWrite from "./influx-write.js";
                 const batteryPower = battery.getCurrentPower();
                 const batterySoC = battery.getCurrentSoC();
 
-                await household.infux.updateDB("bat1", "Battery_Meter", "power", batteryPower, simulationTime.toDate())
-                await household.infux.updateDB("bat1", "Battery_Meter", "soc", batterySoC, simulationTime.toDate())
+                //await household.infux.updateDB("bat1", "Battery_Meter", "power", batteryPower, simulationTime.toDate())
+                //await household.infux.updateDB("bat1", "Battery_Meter", "soc", batterySoC, simulationTime.toDate())
 
             }
 
-            await household.infux.updateDB("resid", "Residual_Meter", "energy", residualEnergyInKWh, simulationTime.toDate())
-            await household.infux.updateDB("resid", "Residual_Meter", "power", residualEnergyInKWh/(60 / 3600), simulationTime.toDate())
+            //await household.infux.updateDB("resid", "Residual_Meter", "energy", residualEnergyInKWh, simulationTime.toDate())
+            //await household.infux.updateDB("resid", "Residual_Meter", "power", residualEnergyInKWh/(60 / 3600), simulationTime.toDate())
 
             for (const ev of household.evs) {
                 const chargingConsumption = ev.update(60);
                 // console.log(chargingConsumption);
             }
+
+            await Sleep("50")
+
+
         }
     }
 })();
