@@ -45,7 +45,7 @@ export default class EV {
         this.enabled = false;
         this.maxCurrent = 16;
         this.currentPhases = 1;
-        
+
         // meter-related variables
         this.currentPower = 0;
 
@@ -58,11 +58,11 @@ export default class EV {
         this.range = this.SoCInKWh / this.averageConsumptionPer100KM * 100;
 
         const app = express();
-        
+
         app.get('/charger/status', (req, res) => {
             res.json(this.status);
         });
-        
+
         app.get('/charger/enabled', (req, res) => {
             res.json(this.enabled);
         });
@@ -115,16 +115,16 @@ export default class EV {
         const leftValue = this.smoothFunction(leftIndex);
         const rightValue = this.smoothFunction(rightIndex);
 
-        const distance = (leftValue + rightValue) / 2 / 3600 * timespan;
+        const speed = (leftValue + rightValue) / 2 / 3600 * timespan;
 
         // reduce SoCInKWh - what if the battery is empty and the car not at home?
-        this.SoCInKWh = this.SoCInKWh - (distance * (this.averageConsumptionPer100KM / 100));
+        this.SoCInKWh = this.SoCInKWh - (speed * (this.averageConsumptionPer100KM / 100));
         this.range = this.SoCInKWh / this.averageConsumptionPer100KM * 100;
 
-        if (distance === 0 && location === 'Home' && this.status === 'A') {
+        if (speed === 0 && location === 'Home' && this.status === 'A') {
             // ready for charging if not already plugged in
             this.status = 'C';
-        } else if ((distance !== 0 || location !== 'Home') && this.status !== 'A') {
+        } else if ((speed !== 0 || location !== 'Home') && this.status !== 'A') {
             // car not at home or driving - unplug if connected
             this.enabled = false;
             this.status = 'A';
@@ -139,21 +139,21 @@ export default class EV {
             if (this.currentPhases === 3) {
                 chargingRate = this.maxCurrent * 400 * Math.sqrt(3) / 1000;
             }
-        
+
             const chargedEnergy = chargingRate * timespan / 3600;
-    
+
             // charge the battery with a small amount of loss
             this.SoCInKWh += chargedEnergy * this.chargingEfficiency;
 
             // we can not charge more than the actual size of the battery
             if (this.SoCInKWh > this.batterySizeInKWh) {
-                
+
                 // saldo is calculated back
                 let chargingSaldo = this.SoCInKWh - this.batterySizeInKWh;
-    
+
                 // calculate back the battery efficiency of the saldo
                 chargingSaldo /= this.chargingEfficiency;
-    
+
                 // set battery fully loaded
                 this.SoCInKWh = this.batterySizeInKWh;
 
@@ -161,7 +161,7 @@ export default class EV {
 
                 return -chargedEnergy + chargingSaldo;
             }
-    
+
             this.currentPower = -chargedEnergy / (timespan / 3600);
 
             return chargedEnergy;
