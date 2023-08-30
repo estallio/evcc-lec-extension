@@ -169,7 +169,7 @@ for (const household of householdsConfig) {
         },
         maxcurrent: {
             source: "http",
-            uri: `http://localhost:${household.wallboxes[0].port}/charger/maxcurrent'`,
+            uri: `http://localhost:${household.wallboxes[0].port}/charger/maxcurrent`,
             method: "POST",
             headers: {
                 'content-type': "application/json"
