@@ -2,6 +2,7 @@ export default {
   households: [
     {
       name: 'Household 1',
+      port: '7070',
       pvs: [{
         file: './production_values/pv_sim_export_4000_0_45.json',
         port: 9001
