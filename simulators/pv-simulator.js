@@ -1,5 +1,6 @@
 import fs from 'fs';
 import Smooth from './utils/Smooth.js';
+import express from "express";
 
 export default class PV {
     constructor(config) {
@@ -21,6 +22,17 @@ export default class PV {
         this.currentSeconds = 0;
 
         this.currentProduction = 0;
+
+        this.port = config.port
+        const app = express();
+
+        app.get('/pv/currentproduction', (req, res) => {
+          res.json(this.currentProduction);
+        });
+
+        app.listen(this.port, () => {
+          console.log(`consumption simulator listening on port ${this.port}`);
+        })
     }
 
     update(timespan) {

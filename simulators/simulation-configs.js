@@ -19,7 +19,7 @@ export default {
       }],
       wallboxes: [{
         maxCurrent: 16, // in A
-        port: 9003
+        port: 9002
       }],
       batteries: [{
         batterySizeInKWh: 10,

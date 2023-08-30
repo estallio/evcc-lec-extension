@@ -81,12 +81,12 @@ export default class EV {
             res.json(this.maxCurrent);
         });
 
-        app.get('/charger/currentPhases', (req, res) => {
+        app.get('/charger/currentphases', (req, res) => {
             res.json(this.currentPhases);
         });
 
-        app.post('/charger/currentPhases', (req, res) => {
-            this.currentPhases = parseInt(req.query.currentphases);
+        app.post('/charger/currentphases', (req, res) => {
+            this.currentPhases = parseInt(req.query.currentPhases);
             res.json(this.currentPhases);
         });
 
@@ -100,6 +100,10 @@ export default class EV {
 
         app.get('/vehicle/status', (req, res) => {
             res.json(this.status);
+        });
+
+        app.get('/vehicle/range', (req, res) => {
+          res.json(this.range);
         });
 
         app.listen(this.port);

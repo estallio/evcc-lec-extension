@@ -7,6 +7,8 @@ const {households: householdsConfig} = config;
 for (const household of householdsConfig) {
     const evccConfig = {};
 
+    evccConfig.interval = "1s"
+
     evccConfig.site = {
         title: household.name, meters: {
             grid: "meter1", pv: "pv1", battery: "battery1"
@@ -40,7 +42,7 @@ for (const household of householdsConfig) {
                 type: "custom",
                 power: {
                     source: "http",
-                    uri: `http://localhost:${household.pvs[0].port}`,
+                    uri: `http://localhost:${household.pvs[0].port}/pv/currentproduction`,
                     method: "GET",
                     headers: {
                         'content-type': "application/json"
@@ -54,7 +56,7 @@ for (const household of householdsConfig) {
                 type: "custom",
                 power: {
                     source: "http",
-                    uri: `http://localhost:${household.wallboxes[0].port}`,
+                    uri: `http://localhost:${household.wallboxes[0].port}/meter/currentpower`,
                     method: "GET",
                     headers: {
                         'content-type': "application/json"
@@ -68,7 +70,7 @@ for (const household of householdsConfig) {
                 type: "custom",
                 power: {
                     source: "http",
-                    uri: `http://localhost:${household.batteries[0].port}`,
+                    uri: `http://localhost:${household.batteries[0].port}/battery/currentpower`,
                     method: "GET",
                     headers: {
                         'content-type': "application/json"
@@ -78,7 +80,7 @@ for (const household of householdsConfig) {
                 },
                 soc: {
                     source: "http",
-                    uri: `http://localhost:${household.batteries[0].port}`,
+                    uri: `http://localhost:${household.batteries[0].port}/battery/soc`,
                     method: "GET",
                     headers: {
                         'content-type': "application/json"
@@ -88,7 +90,7 @@ for (const household of householdsConfig) {
                 },
                 energy: {
                     source: "http",
-                    uri: `http://localhost:${household.batteries[0].port}`,
+                    uri: `http://localhost:${household.batteries[0].port}/battery/energy`,
                     method: "GET",
                     headers: {
                         'content-type': "application/json"
@@ -107,7 +109,7 @@ for (const household of householdsConfig) {
         capacity: household.batteries[0].batterySizeInKWh,
         soc: {
             source: "http",
-            uri: `http://localhost:${household.evs[0].port}`,
+            uri: `http://localhost:${household.evs[0].port}/vehicle/soc`,
             method: "GET",
             headers: {
                 'content-type': "application/json"
@@ -117,7 +119,7 @@ for (const household of householdsConfig) {
         },
         status: {
             source: "http",
-            uri: `http://localhost:${household.evs[0].port}`,
+            uri: `http://localhost:${household.evs[0].port}/vehicle/status`,
             method: "GET",
             headers: {
                 'content-type': "application/json"
@@ -126,7 +128,7 @@ for (const household of householdsConfig) {
         },
         range: {
             source: "http",
-            uri: `http://localhost:${household.evs[0].port}`,
+            uri: `http://localhost:${household.evs[0].port}/vehicle/range`,
             method: "GET",
             headers: {
                 'content-type': "application/json"
@@ -140,7 +142,7 @@ for (const household of householdsConfig) {
         type: "custom",
         status: {
             source: "http",
-            uri: `http://localhost:${household.wallboxes[0].port}`,
+            uri: `http://localhost:${household.wallboxes[0].port}/charger/status`,
             method: "GET",
             headers: {
                 'content-type': "application/json"
@@ -149,7 +151,7 @@ for (const household of householdsConfig) {
         },
         enabled: {
             source: "http",
-            uri: `http://localhost:${household.wallboxes[0].port}`,
+            uri: `http://localhost:${household.wallboxes[0].port}/charger/enabled`,
             method: "GET",
             headers: {
                 'content-type': "application/json"
@@ -158,8 +160,8 @@ for (const household of householdsConfig) {
         },
         enable: {
             source: "http",
-            uri: `http://localhost:${household.wallboxes[0].port}`,
-            method: "GET",
+            uri: `http://localhost:${household.wallboxes[0].port}/charger/enable`,
+            method: "POST",
             headers: {
                 'content-type': "application/json"
             },
@@ -167,7 +169,7 @@ for (const household of householdsConfig) {
         },
         maxcurrent: {
             source: "http",
-            uri: `http://localhost:${household.wallboxes[0].port}`,
+            uri: `http://localhost:${household.wallboxes[0].port}/charger/maxcurrent'`,
             method: "POST",
             headers: {
                 'content-type': "application/json"
