@@ -1,0 +1,42 @@
+import express from 'express';
+import ArgumentParser from 'argparse';
+import moment from "moment";
+
+const app = express();
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
+
+const parser = new ArgumentParser.ArgumentParser({description: 'Mocks API on port.'})
+
+parser.add_argument('-p', '--port', {help: 'Port the app is listening to'});
+parser.add_argument('-m', '--maxRange', {help: 'Max value of random value'});
+
+const args = parser.parse_args()
+
+if (args.port === undefined) {
+    throw new Error("Undefined port");
+}
+
+if (args.maxRange === undefined) {
+    args.maxRange = 100
+} else {
+    args.maxRange = Number.parseInt(args.maxRange)
+}
+
+app.get('/meter/currentconsumption', (req, res) => {
+    const val = getRandomInt(args.maxRange)
+    console.log(`New request at ${moment.utc(moment.now()).format()} form port ${args.port}, return value: ${val}`)
+    res.json();
+});
+
+app.get('/', (req, res) => {
+    const val = getRandomInt(args.maxRange)
+    console.log(`New request at ${moment.utc(moment.now()).format()} form port ${args.port}, return value: ${val}`)
+    res.json(val);
+});
+
+app.listen(args.port, () => {
+    console.log(`listening on port ${args.port}`);
+})
