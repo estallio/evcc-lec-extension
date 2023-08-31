@@ -1,10 +1,76 @@
 import fs from "fs";
+import got from 'got';
+import 'dotenv/config';
 
 export default {
-    households: gen()
+    households: await gen()
 }
 
-function hhObject(num, webPort, pvP, pvAzimuth, pvPort, evLocation, evDistance, evPort, batteryPort, consumptionFile, consumptionPort, influxBucket) {
+async function hhObject(num, webPort, pvP, pvAzimuth, pvPort, evLocation, evDistance, evPort, batteryPort, consumptionFile, consumptionPort, influxBucket) {
+
+    const influxInstance = 'http://localhost:8086';
+    const influxToken = process.env.INFLUX_TOKEN;
+    const influxOrganisation = 'home';
+    let data;
+
+    // normally, influxdb forbids the API to write to organisation with: write:orgs is unauthorized
+    /*
+        example: 
+        curl --request POST "http://localhost:8086/api/v2/orgs" \
+        --header "Authorization: Token -EOXPQUSw_q8hYpzhDoq_RMOttf6EVouRxxBEK5T5j6ES5XdqvsjSUFMjrvLCZwGddSDlh9GbO3nPCjMTO-Yjg==" \
+        --header "Accept: application/json" \
+        --header "Content-Type: application/json" \
+        --data '{ "name": "tester", "description": "Example InfluxDB organization" }'
+    *//*
+    let data = await got.post(influxInstance + '/api/v2/orgs', {
+        headers: {
+            Authorization: 'Token ' + influxToken,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+        json: {
+		    name: influxOrganisation,
+	    }
+    }).json();
+    */
+
+    data = await got.get(influxInstance + '/api/v2/orgs?org=' + influxOrganisation, {
+        headers: {
+            Authorization: 'Token ' + influxToken,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        }
+    }).json();
+
+    const orgId = data.orgs[0].id;
+
+    data = await got.get(influxInstance + '/api/v2/buckets?name=' + influxBucket, {
+        headers: {
+            Authorization: 'Token ' + influxToken,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        }
+    }).json();
+
+    if (data.buckets.length === 0) {
+        data = await got.post(influxInstance + '/api/v2/buckets', {
+            headers: {
+                Authorization: 'Token ' + influxToken,
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            json: {
+                name: influxBucket,
+                description: "A bucket holding evcc data",
+                orgID: orgId,
+                // retentionRules: [{
+                //    type: "expire",
+                //    everySeconds: 2592000,
+                // }]
+            }
+        }).json();
+    }
+
     return {
         name: `Household ${num}`, port: webPort, pvs: [{
             file: `./production_values/pv_sim_export_${pvP}_${pvAzimuth}_45.json`, port: pvPort
@@ -31,16 +97,15 @@ function hhObject(num, webPort, pvP, pvAzimuth, pvPort, evLocation, evDistance, 
         }], consumptions: [{
             file: `consumption_values/House_${consumptionFile}.json`, port: consumptionPort
         }], influx: {
-            url: "http://localhost:8086",
+            url: influxInstance,
             bucket: influxBucket,
-            token: "zkF_MBAO4dcMB65cSmgz8LBmow7dUYa38iQtXmo9mAOR6Yw4oEGINN1I8PFNapL-3E4tNR9ABSZIT5XhZjcLyQ==",
-            org: "home"
+            token: influxToken,
+            org: influxOrganisation
         }
     }
 }
 
-
-function gen() {
+async function gen() {
     let count = 0
     let port = 9000
     let web_port = 7070
@@ -56,7 +121,7 @@ function gen() {
     for (let i = 1; i <= 5; i++) {
         for (let j = 1; j <= 5; j++) {
             count += 1
-            let hh = hhObject(count,
+            let hh = await hhObject(count,
                 web_port++,
                 pvP,
                 pvAzimuth[count - 1],
