@@ -6,9 +6,10 @@ import PV from './pv-simulator.js';
 import Consumption from './consumption-simulator.js';
 import EV from './ev-simulator.js';
 import InfluxWrite from "./influx-write.js";
+import exec from 'child_process'
 
 function Sleep(milliseconds) {
-  return new Promise(resolve => setTimeout(resolve, milliseconds));
+    return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
 (async () => {
@@ -52,9 +53,13 @@ function Sleep(milliseconds) {
 
     const simulationTime = moment('2021-09-01T00:00:00');
 
+    exec.exec(`date -s "${simulationTime.format("YYYY-MM-DD HH:mm")}"`, (err, stdout, stderr) => {
+    });
+
     // simulation loop
     for (let i = 0; i < 7 * 24 * 60; i++) {
         simulationTime.add(60, 'seconds');
+
 
         console.log(simulationTime.toDate());
 
@@ -98,6 +103,8 @@ function Sleep(milliseconds) {
                 // console.log(chargingConsumption);
             }
 
+            exec.exec(`date -s "${simulationTime.format("YYYY-MM-DD HH:mm")}"`, (err, stdout, stderr) => {
+            });
             await Sleep("50")
 
 
