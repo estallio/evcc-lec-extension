@@ -209,7 +209,10 @@ for (const household of householdsConfig) {
     evccConfig.tariffs = {
         currency: "EUR",
         grid: {
-            type: "fixed", price: 0.35
+            type: "awattar",
+            region: "at",
+            charges: 0, // optional, additional charges per kWh
+            tax: 0 // optional, additional tax (0.1 for 10%)
         }
     }
 

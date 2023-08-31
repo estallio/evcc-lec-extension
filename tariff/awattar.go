@@ -1,9 +1,7 @@
 package tariff
 
 import (
-	"fmt"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -44,7 +42,7 @@ func NewAwattarFromConfig(other map[string]interface{}) (api.Tariff, error) {
 	t := &Awattar{
 		embed: &cc.embed,
 		log:   util.NewLogger("awattar"),
-		uri:   fmt.Sprintf(awattar.RegionURI, strings.ToLower(cc.Region)),
+		uri:   awattar.RegionURI,
 	}
 
 	done := make(chan error)

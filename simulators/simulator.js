@@ -113,7 +113,7 @@ function Sleep(milliseconds) {
 
             exec.exec(`date -s "${simulationTime.format("YYYY-MM-DD HH:mm")}"`);
 
-            await Sleep("10");
+            await Sleep("100");
         }
     }
 })();

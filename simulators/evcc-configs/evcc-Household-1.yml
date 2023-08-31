@@ -1,18 +1,28 @@
 log: debug
-interval: 1s
+interval: 0.1s
 site:
   title: Household 1
   meters:
-    grid: meter1
+    grid: smartMeter
     pv: pv1
     battery: battery1
 influx:
   url: http://localhost:8086
   token: >-
-    Gdb3i0opdlrh-MEQEYfPO_2AvZlE3sxrnF2s206sM_Dh95yy_UKP-K1ckhuho0NbuMPXBhzoI5bcY9OFkBQqKA==
+    TkE4ZRdAjFG35huvB5Vrt_dZjdYUPZv5_6ocHdo1SujlBjTYrJk3XioIMyGvFPmegqoWXy8df8QL9KryAZD4dA==
   org: home
   database: sim_1
 meters:
+  - name: smartMeter
+    type: custom
+    power:
+      source: http
+      uri: http://localhost:9004/residualPower
+      method: GET
+      headers:
+        content-type: application/json
+      scale: 1000
+      timeout: 10s
   - name: meter1
     type: custom
     power:
@@ -135,8 +145,11 @@ loadpoints:
     charger: charger1
     vehicle: vehicle1
     meter: wallbox1
+    mode: 'off'
 tariffs:
   currency: EUR
   grid:
-    type: fixed
-    price: 0.35
+    type: awattar
+    region: at # optional, choose at for Austria
+    charges: 0 # optional, additional charges per kWh
+    tax: 0 # optional, additional tax (0.1 for 10%)
