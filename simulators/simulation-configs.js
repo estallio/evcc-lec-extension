@@ -6,7 +6,7 @@ export default {
     households: await gen()
 }
 
-async function hhObject(num, webPort, pvP, pvAzimuth, pvPort, evLocation, evDistance, evPort, batteryPort, consumptionFile, consumptionPort, influxBucket) {
+async function hhObject(num, webPort, pvP, pvAzimuth, pvPort, evLocation, evDistance, evPort, batteryPort, consumptionFile, consumptionPort, influxBucket, smartMeterPort) {
 
     const influxInstance = 'http://localhost:8086';
     const influxToken = process.env.INFLUX_TOKEN;
@@ -101,6 +101,8 @@ async function hhObject(num, webPort, pvP, pvAzimuth, pvPort, evLocation, evDist
             bucket: influxBucket,
             token: influxToken,
             org: influxOrganisation
+        }, smartMeter: {
+            port: smartMeterPort,
         }
     }
 }
@@ -131,7 +133,8 @@ async function gen() {
                 port++,
                 port++,
                 `${i}-HH_${j}`,
-                port++, `sim_${count}`
+                port++, `sim_${count}`,
+                port++
             )
             houseHolds.push(hh)
             console.log(count)

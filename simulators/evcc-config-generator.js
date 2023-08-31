@@ -13,7 +13,7 @@ for (const household of householdsConfig) {
 
     evccConfig.site = {
         title: household.name, meters: {
-            grid: "meter1", pv: "pv1", battery: "battery1"
+            grid: "smartMeter", pv: "pv1", battery: "battery1"
         }
     }
 
@@ -26,6 +26,20 @@ for (const household of householdsConfig) {
     // custom meter
     evccConfig.meters =
         [{
+            name: "smartMeter",
+            type: "custom",
+            power: {
+                source: "http",
+                uri: `http://localhost:${household.smartMeter.port}/residualPower`,
+                method: "GET",
+                headers: {
+                    'content-type': "application/json"
+                },
+                scale: 1000, //We return kW
+                timeout: "10s"
+            }
+        },
+        {
             name: "meter1",
             type: "custom",
             power: {
@@ -188,7 +202,8 @@ for (const household of householdsConfig) {
         title: "Garage",
         charger: "charger1",
         vehicle: "vehicle1",
-        meter: "wallbox1"
+        meter: "wallbox1",
+        mode: "off"
     }]
 
     evccConfig.tariffs = {

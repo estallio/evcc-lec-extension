@@ -73,10 +73,6 @@ export default class EV {
 
         app.post('/charger/enable', (req, res) => {
             this.enabled = req.body === "true";
-            console.log("==========status current========")
-            console.dir(req.body)
-            console.log(this.enabled)
-            console.log("================================")
             res.json(this.enabled);
         });
 
@@ -135,18 +131,25 @@ export default class EV {
         this.SoCInKWh = this.SoCInKWh - (speed * (this.averageConsumptionPer100KM / 100));
         this.range = this.SoCInKWh / this.averageConsumptionPer100KM * 100;
 
-        if (speed === 0 && location === 'Home' && this.status === 'A') {
-            // ready for charging if not already plugged in
-            this.status = 'C';
-        } else if ((speed !== 0 || location !== 'Home') && this.status !== 'A') {
-            // car not at home or driving - unplug if connected
-            this.enabled = false;
-            this.status = 'A';
-        }
-
         this.currentSeconds += timespan;
 
-        if (this.status === 'C' && this.enabled) {
+        if ((speed !== 0 || location !== 'Home') && this.status !== 'A') {
+            // car is not at home or driving around - unplug automatically if connected            
+            this.status = 'A';
+            this.enabled = false;
+            this.currentPower = 0;
+        } else if (speed === 0 && location === 'Home' && this.status === 'A') {
+            // car is not driving and at home, plug it in if not already plugged in
+            this.status = 'B';
+            this.enabled = false;
+            this.currentPower = 0;
+        } else if (this.status === 'B' && this.enabled == true) {
+            // car should start charging but is only in ready state - set it in active state
+            this.status = 'C';
+        } else if (this.status === 'C' && this.enabled == false) {
+            // car is charging - stop it
+            this.status = 'B';
+        } else if (this.status === 'C') {
             // charge car with charging rate in kW
             let chargingRate = this.maxCurrent * 230 / 1000;
 
@@ -181,7 +184,13 @@ export default class EV {
             return chargedEnergy;
         }
 
+        this.currentPower = 0;
+
         return 0;
+    }
+
+    getCurrentPower() {
+        return this.currentPower;
     }
 }
 

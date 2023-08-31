@@ -6,7 +6,6 @@ export default class Consumption {
     constructor(config) {
         this.file = config.file;
 
-
         this.rawConsumptionData = fs.readFileSync(this.file);
         this.consumptionData = JSON.parse(this.rawConsumptionData);
 
@@ -24,7 +23,8 @@ export default class Consumption {
 
         this.currentConsumption = 0;
 
-        this.port = config.port
+        this.port = config.port;
+
         const app = express();
 
         app.get('/meter/currentconsumption', (req, res) => {
@@ -33,10 +33,10 @@ export default class Consumption {
 
         app.listen(this.port, () => {
             console.log(`consumption simulator listening on port ${this.port}`);
-        })
+        });
     }
 
-    update(timespan, chargingConsumption, pvPower) {
+    update(timespan) {
         const leftIndex = this.currentSeconds / this.intervalInSeconds;
         const rightIndex = (this.currentSeconds + timespan) / this.intervalInSeconds;
 
@@ -48,8 +48,6 @@ export default class Consumption {
         const consumedEnergy = (leftValue + rightValue) / 2 * (timespan / 3600);
 
         this.currentConsumption = -(consumedEnergy / (timespan / 3600));
-        this.currentConsumption -= chargingConsumption;
-        //this.currentConsumption += pvPower;
 
         return -consumedEnergy;
     }
