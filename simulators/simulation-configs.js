@@ -44,22 +44,32 @@ async function hhObject(num, webPort, pvP, pvAzimuth, pvPort, evLocation, evDist
 
     const orgId = data.orgs[0].id;
 
-    data = await got.post(influxInstance + '/api/v2/buckets', {
+    data = await got.get(influxInstance + '/api/v2/buckets?name=' + influxBucket, {
         headers: {
             Authorization: 'Token ' + influxToken,
             Accept: 'application/json',
             'Content-Type': 'application/json',
-        },
-        json: {
-		    name: influxBucket,
-            description: "A bucket holding evcc data",
-            orgID: orgId,
-            // retentionRules: [{
-            //    type: "expire",
-            //    everySeconds: 2592000,
-            // }]
-	    }
+        }
     }).json();
+
+    if (data.buckets.length === 0) {
+        data = await got.post(influxInstance + '/api/v2/buckets', {
+            headers: {
+                Authorization: 'Token ' + influxToken,
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            json: {
+                name: influxBucket,
+                description: "A bucket holding evcc data",
+                orgID: orgId,
+                // retentionRules: [{
+                //    type: "expire",
+                //    everySeconds: 2592000,
+                // }]
+            }
+        }).json();
+    }
 
     return {
         name: `Household ${num}`, port: webPort, pvs: [{
