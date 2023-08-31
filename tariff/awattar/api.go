@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const RegionURI = "https://api.awattar.%s/v1/marketdata"
+const RegionURI = "http://localhost:3333/v1/marketdata"
 
 type Prices struct {
 	Data []PriceInfo
