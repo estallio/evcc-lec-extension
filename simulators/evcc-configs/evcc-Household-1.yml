@@ -1,0 +1,155 @@
+log: debug
+interval: 0.1s
+site:
+  title: Household 1
+  meters:
+    grid: smartMeter
+    pv: pv1
+    battery: battery1
+influx:
+  url: http://localhost:8086
+  token: >-
+    TkE4ZRdAjFG35huvB5Vrt_dZjdYUPZv5_6ocHdo1SujlBjTYrJk3XioIMyGvFPmegqoWXy8df8QL9KryAZD4dA==
+  org: home
+  database: sim_1
+meters:
+  - name: smartMeter
+    type: custom
+    power:
+      source: http
+      uri: http://localhost:9004/residualPower
+      method: GET
+      headers:
+        content-type: application/json
+      scale: 1000
+      timeout: 10s
+  - name: meter1
+    type: custom
+    power:
+      source: http
+      uri: http://localhost:9003/meter/currentconsumption
+      method: GET
+      headers:
+        content-type: application/json
+      scale: 1000
+      timeout: 10s
+  - name: pv1
+    type: custom
+    power:
+      source: http
+      uri: http://localhost:9000/pv/currentproduction
+      method: GET
+      headers:
+        content-type: application/json
+      timeout: 10s
+      scale: 1000
+  - name: wallbox1
+    type: custom
+    power:
+      source: http
+      uri: http://localhost:9001/meter/currentpower
+      method: GET
+      headers:
+        content-type: application/json
+      timeout: 10s
+      scale: 1000
+  - name: battery1
+    type: custom
+    power:
+      source: http
+      uri: http://localhost:9002/battery/currentpower
+      method: GET
+      headers:
+        content-type: application/json
+      scale: 1000
+      timeout: 10s
+    soc:
+      source: http
+      uri: http://localhost:9002/battery/soc
+      method: GET
+      headers:
+        content-type: application/json
+      scale: 100
+      timeout: 10s
+    energy:
+      source: http
+      uri: http://localhost:9002/battery/energy
+      method: GET
+      headers:
+        content-type: application/json
+      timeout: 10s
+    capacity: 50
+vehicles:
+  - name: vehicle1
+    title: Vehicle 1
+    type: custom
+    capacity: 10
+    soc:
+      source: http
+      uri: http://localhost:9001/vehicle/soc
+      method: GET
+      headers:
+        content-type: application/json
+      scale: 100
+      timeout: 10s
+    status:
+      source: http
+      uri: http://localhost:9001/vehicle/status
+      method: GET
+      headers:
+        content-type: application/json
+      timeout: 10s
+    range:
+      source: http
+      uri: http://localhost:9001/vehicle/range
+      method: GET
+      headers:
+        content-type: application/json
+      timeout: 10s
+chargers:
+  - name: charger1
+    type: custom
+    status:
+      source: http
+      uri: http://localhost:9001/charger/status
+      method: GET
+      headers:
+        content-type: application/json
+      timeout: 10s
+    enabled:
+      source: http
+      uri: http://localhost:9001/charger/enabled
+      method: GET
+      headers:
+        content-type: application/json
+      timeout: 10s
+    enable:
+      source: http
+      uri: http://localhost:9001/charger/enable
+      method: POST
+      headers:
+        content-type: text/plain
+      timeout: 10s
+    maxcurrent:
+      source: http
+      uri: http://localhost:9001/charger/maxcurrent
+      method: POST
+      headers:
+        content-type: text/plain
+      timeout: 10s
+network:
+  port: 7070
+  schema: http
+loadpoints:
+  - title: Garage
+    charger: charger1
+    vehicle: vehicle1
+    meter: wallbox1
+    mode: 'off'
+tariffs:
+  currency: EUR
+  grid:
+    type: awattar
+    region: at # optional, choose at for Austria
+    charges: 0 # optional, additional charges per kWh
+    tax: 0 # optional, additional tax (0.1 for 10%)
