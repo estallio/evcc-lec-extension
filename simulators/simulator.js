@@ -12,7 +12,7 @@ function Sleep(milliseconds) {
 }
 
 (async () => {
-    const {households: householdsConfig} = config;
+    const { households: householdsConfig } = await config;
 
     const households = [];
 
