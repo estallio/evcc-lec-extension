@@ -1,4 +1,5 @@
 import fs from "fs";
+import 'dotenv/config';
 
 export default {
     households: gen()
@@ -33,12 +34,11 @@ function hhObject(num, webPort, pvP, pvAzimuth, pvPort, evLocation, evDistance, 
         }], influx: {
             url: "http://localhost:8086",
             bucket: influxBucket,
-            token: "zkF_MBAO4dcMB65cSmgz8LBmow7dUYa38iQtXmo9mAOR6Yw4oEGINN1I8PFNapL-3E4tNR9ABSZIT5XhZjcLyQ==",
+            token: process.env.INFLUX_TOKEN,
             org: "home"
         }
     }
 }
-
 
 function gen() {
     let count = 0
