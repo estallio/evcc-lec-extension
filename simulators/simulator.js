@@ -13,7 +13,7 @@ function Sleep(milliseconds) {
 }
 
 (async () => {
-    const { households: householdsConfig } = await config;
+    const {households: householdsConfig} = await config;
 
     const households = [];
 
@@ -70,20 +70,27 @@ function Sleep(milliseconds) {
             // for this reason, we get the consumption and production data first and secondly give the battery the chance to charge
             // this strategy neglects the ev charging at first and priorizes the battery charging
             // the ev charging strategy is the job of evcc
+            let chargingConsumption = 0
+            for (const ev of household.evs) {
+                chargingConsumption += ev.update(60);
+                // console.log(chargingConsumption);
+            }
+
+            let pvPower = 0;
+            for (const pv of household.pvs) {
+                residualEnergyInKWh += pv.update(60);
+                pvPower += pv.getCurrentPower();
+
+                //await household.infux.updateDB("pv1", "PV_Inverter_Reading", "power", pvPower, simulationTime.toDate())
+            }
 
             for (const consumption of household.consumptions) {
-                residualEnergyInKWh += consumption.update(60);
+                residualEnergyInKWh += consumption.update(60, chargingConsumption, pvPower);
                 const consumptionPower = consumption.getCurrentPower();
 
                 //await household.infux.updateDB("sm1", "Smart_Meter_Reading", "power", consumptionPower, simulationTime.toDate())
             }
 
-            for (const pv of household.pvs) {
-                residualEnergyInKWh += pv.update(60);
-                const pvPower = pv.getCurrentPower();
-
-                //await household.infux.updateDB("pv1", "PV_Inverter_Reading", "power", pvPower, simulationTime.toDate())
-            }
 
             for (const battery of household.batteries) {
                 residualEnergyInKWh = battery.update(60, residualEnergyInKWh);
@@ -98,14 +105,10 @@ function Sleep(milliseconds) {
             //await household.infux.updateDB("resid", "Residual_Meter", "energy", residualEnergyInKWh, simulationTime.toDate())
             //await household.infux.updateDB("resid", "Residual_Meter", "power", residualEnergyInKWh/(60 / 3600), simulationTime.toDate())
 
-            for (const ev of household.evs) {
-                const chargingConsumption = ev.update(60);
-                // console.log(chargingConsumption);
-            }
 
             exec.exec(`date -s "${simulationTime.format("YYYY-MM-DD HH:mm")}"`, (err, stdout, stderr) => {
             });
-            await Sleep("50")
+            await Sleep("1000")
 
 
         }

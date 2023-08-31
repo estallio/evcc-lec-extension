@@ -99,7 +99,7 @@ export default class EV {
         });
 
         app.get('/meter/currentpower', (req, res) => {
-            res.json(this.currentPower);
+            res.json(-this.currentPower);
         });
 
         app.get('/vehicle/soc', (req, res) => {

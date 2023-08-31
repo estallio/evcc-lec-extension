@@ -28,7 +28,7 @@ export default class Consumption {
         const app = express();
 
         app.get('/meter/currentconsumption', (req, res) => {
-            res.json(this.currentConsumption);
+            res.json(-this.currentConsumption);
         });
 
         app.listen(this.port, () => {
@@ -36,7 +36,7 @@ export default class Consumption {
         })
     }
 
-    update(timespan) {
+    update(timespan, chargingConsumption, pvPower) {
         const leftIndex = this.currentSeconds / this.intervalInSeconds;
         const rightIndex = (this.currentSeconds + timespan) / this.intervalInSeconds;
 
@@ -48,6 +48,8 @@ export default class Consumption {
         const consumedEnergy = (leftValue + rightValue) / 2 * (timespan / 3600);
 
         this.currentConsumption = -(consumedEnergy / (timespan / 3600));
+        this.currentConsumption -= chargingConsumption;
+        //this.currentConsumption += pvPower;
 
         return -consumedEnergy;
     }

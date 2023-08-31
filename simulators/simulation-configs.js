@@ -15,7 +15,7 @@ async function hhObject(num, webPort, pvP, pvAzimuth, pvPort, evLocation, evDist
 
     // normally, influxdb forbids the API to write to organisation with: write:orgs is unauthorized
     /*
-        example: 
+        example:
         curl --request POST "http://localhost:8086/api/v2/orgs" \
         --header "Authorization: Token -EOXPQUSw_q8hYpzhDoq_RMOttf6EVouRxxBEK5T5j6ES5XdqvsjSUFMjrvLCZwGddSDlh9GbO3nPCjMTO-Yjg==" \
         --header "Accept: application/json" \
@@ -118,8 +118,8 @@ async function gen() {
         0, 90, 180, 270, 270,
         0, 90, 180, 270, 0,
     ]
-    for (let i = 1; i <= 5; i++) {
-        for (let j = 1; j <= 5; j++) {
+    for (let i = 1; i <= 1; i++) {
+        for (let j = 1; j <= 1; j++) {
             count += 1
             let hh = await hhObject(count,
                 web_port++,
