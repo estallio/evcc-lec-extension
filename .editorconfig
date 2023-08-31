@@ -16,4 +16,4 @@ indent_size = 2
 
 [*.{js,html,yml,yaml,json,md}]
 indent_style = space
-indent_size = 2
+indent_size = 4
