@@ -125,6 +125,9 @@ func runRoot(cmd *cobra.Command, args []string) {
 		err = cfgErr
 	}
 
+	// global time config
+	util.ConfigureInstance(conf.SimulationTimeGranularity, conf.SimulationStepSize)
+
 	// network config
 	if viper.GetString("uri") != "" {
 		log.WARN.Println("`uri` is deprecated and will be ignored. Use `network` instead.")

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/evcc-io/evcc/util"
 )
 
 const wakeupTimeout = 30 * time.Second
@@ -19,7 +20,7 @@ type Timer struct {
 // NewTimer creates timer that can expire
 func NewTimer() *Timer {
 	return &Timer{
-		clck: clock.New(),
+		clck: util.GetInstance(),
 	}
 }
 

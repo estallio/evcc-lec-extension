@@ -21,7 +21,7 @@ type Planner struct {
 func New(log *util.Logger, tariff api.Tariff) *Planner {
 	return &Planner{
 		log:    log,
-		clock:  clock.New(),
+		clock:  util.GetInstance(),
 		tariff: tariff,
 	}
 }

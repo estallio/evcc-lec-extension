@@ -28,7 +28,7 @@ type ChargeRater struct {
 func NewChargeRater(log *util.Logger, meter api.Meter) *ChargeRater {
 	return &ChargeRater{
 		log:   log,
-		clck:  clock.New(),
+		clck:  util.GetInstance(),
 		meter: meter,
 	}
 }

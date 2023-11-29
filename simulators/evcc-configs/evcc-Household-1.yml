@@ -1,5 +1,7 @@
-log: debug
-interval: 0.1s
+interval: 10
+simulationTimeGranularity: 10ms
+simulationStepSize: 60000ms
+simulationStartTime: '2022-09-01T00:00:00'
 site:
   title: Household 1
   meters:
@@ -9,8 +11,8 @@ site:
 influx:
   url: http://localhost:8086
   token: >-
-    TkE4ZRdAjFG35huvB5Vrt_dZjdYUPZv5_6ocHdo1SujlBjTYrJk3XioIMyGvFPmegqoWXy8df8QL9KryAZD4dA==
-  org: home
+    3kzcwoK7Oy7Gyf-2jQyuVz8jP-QHUFoU9-x_xDjz-GSTKXdK_uo56QVMkiEBTFxCKTL7fN-y3QwyKPT6ogH1fw==
+  org: org
   database: sim_1
 meters:
   - name: smartMeter
@@ -78,12 +80,12 @@ meters:
       headers:
         content-type: application/json
       timeout: 10s
-    capacity: 50
+    capacity: 10
 vehicles:
   - name: vehicle1
     title: Vehicle 1
     type: custom
-    capacity: 10
+    capacity: 50
     soc:
       source: http
       uri: http://localhost:9001/vehicle/soc
@@ -150,6 +152,6 @@ tariffs:
   currency: EUR
   grid:
     type: awattar
-    region: at # optional, choose at for Austria
-    charges: 0 # optional, additional charges per kWh
-    tax: 0 # optional, additional tax (0.1 for 10%)
+    region: at
+    charges: 0
+    tax: 0

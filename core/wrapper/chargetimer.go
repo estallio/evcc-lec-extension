@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/evcc-io/evcc/util"
 )
 
 // ChargeTimer measures charging time between start and stop events
@@ -21,7 +22,7 @@ type ChargeTimer struct {
 // start and stop events
 func NewChargeTimer() *ChargeTimer {
 	return &ChargeTimer{
-		clck: clock.New(),
+		clck: util.GetInstance(),
 	}
 }
 

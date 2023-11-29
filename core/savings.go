@@ -6,6 +6,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/evcc-io/evcc/server/db/settings"
 	"github.com/evcc-io/evcc/tariff"
+	"github.com/evcc-io/evcc/util"
 )
 
 const (
@@ -33,7 +34,7 @@ type Savings struct {
 }
 
 func NewSavings(tariffs tariff.Tariffs) *Savings {
-	clock := clock.New()
+	clock := util.GetInstance()
 	savings := &Savings{
 		clock:   clock,
 		tariffs: tariffs,
