@@ -1,7 +1,12 @@
 import moment from 'moment';
-import exec from 'child_process';
 
-import config from './simulation-configs.js';
+import {
+    generateHouseholdsConfig,
+    setupInfluxForHousehold,
+    simulationTimeGranularity,
+    simulationStepSize,
+    simulationStartTime,
+} from './simulation-configs.js';
 
 import Battery from './battery-simulator.js';
 import PV from './pv-simulator.js';
@@ -16,7 +21,7 @@ function Sleep(milliseconds) {
 }
 
 (async () => {
-    const {households: householdsConfig} = await config;
+    const householdsConfig = generateHouseholdsConfig();
 
     const households = [];
 
@@ -25,7 +30,9 @@ function Sleep(milliseconds) {
 
         const household = {};
 
-        household.infux = new InfluxWrite(householdConfig.influx);
+        await setupInfluxForHousehold(householdConfig); // generates an influx-bucket for a single household
+
+        household.influx = new InfluxWrite(householdConfig.influx);
 
         household.smartMeter = new SmartMeter(householdConfig.smartMeter);
 
@@ -53,19 +60,26 @@ function Sleep(milliseconds) {
             household.evs.push(ev);
         }
 
-        households.push(household)
+        households.push(household);
     }
 
-    const simulationTime = moment('2021-09-01T00:00:00');
+    const simulationTime = moment(simulationStartTime);
 
-    exec.exec(`date -s "${simulationTime.format("YYYY-MM-DD HH:mm")}"`);
+    console.log("Starting simulation...");
+
+    console.log(1, "sec in realtime is ", (1 / simulationTimeGranularity) * simulationStepSize, "sec in simulation time");
+
+    setInterval(() => {
+        console.log("Simulation time: " + simulationTime.toDate());
+    }, 1000);
+
+    // be careful: input parameters are in seconds and milliseconds
 
     // simulation loop
-    for (let i = 0; i < 7 * 24 * 60; i++) {
-        simulationTime.add(60, 'seconds');
-
-        console.log(simulationTime.toDate());
-
+    for (;;) {
+        
+        // console.log("Simulation time: " + simulationTime.toDate());
+        
         for (const household of households) {
             let residualEnergyInKWh = 0;
 
@@ -75,45 +89,44 @@ function Sleep(milliseconds) {
 
             let currentConsumptionPower = 0;
             for (const consumption of household.consumptions) {
-                residualEnergyInKWh += consumption.update(60);
+                residualEnergyInKWh += consumption.update(simulationStepSize / 1000); // to seconds
                 currentConsumptionPower += consumption.getCurrentPower();
 
-                //await household.infux.updateDB("sm1", "Smart_Meter_Reading", "power", consumptionPower, simulationTime.toDate())
+                await household.influx.updateDB("sm1", "Smart_Meter_Reading", "power", currentConsumptionPower, simulationTime.toDate());
             }
 
             let currentPvPower = 0;
             for (const pv of household.pvs) {
-                residualEnergyInKWh += pv.update(60);
+                residualEnergyInKWh += pv.update(simulationStepSize / 1000); // to seconds
                 currentPvPower += pv.getCurrentPower();
 
-                //await household.infux.updateDB("pv1", "PV_Inverter_Reading", "power", pvPower, simulationTime.toDate())
+                await household.influx.updateDB("pv1", "PV_Inverter_Reading", "power", currentPvPower, simulationTime.toDate())
             }
 
             let currentBatteryPower = 0;
             for (const battery of household.batteries) {
                 // changes the residual value, therefore no '+='
-                residualEnergyInKWh = battery.update(60, residualEnergyInKWh);
+                residualEnergyInKWh = battery.update(simulationStepSize / 1000, residualEnergyInKWh); // to seconds
                 currentBatteryPower += battery.getCurrentPower();
                 
-                // const batterySoC = battery.getCurrentSoC();
-                //await household.infux.updateDB("bat1", "Battery_Meter", "power", batteryPower, simulationTime.toDate())
-                //await household.infux.updateDB("bat1", "Battery_Meter", "soc", batterySoC, simulationTime.toDate())
+                // const currentBatterySoC = battery.getCurrentSoC();
+                // await household.influx.updateDB("bat1", "Battery_Meter", "soc", currentBatterySoC, simulationTime.toDate())
+                await household.influx.updateDB("bat1", "Battery_Meter", "power", currentBatteryPower, simulationTime.toDate())
             }
 
             let currentEvChargingPower = 0;
             for (const ev of household.evs) {
-                residualEnergyInKWh += ev.update(60);
+                residualEnergyInKWh += ev.update(simulationStepSize / 1000); // to seconds
                 currentEvChargingPower += ev.getCurrentPower();
             }
 
             household.smartMeter.setResidualPower(-(currentConsumptionPower + currentPvPower + currentBatteryPower + currentEvChargingPower));
 
-            //await household.infux.updateDB("resid", "Residual_Meter", "energy", residualEnergyInKWh, simulationTime.toDate())
-            //await household.infux.updateDB("resid", "Residual_Meter", "power", residualEnergyInKWh/(60 / 3600), simulationTime.toDate())
-
-            exec.exec(`date -s "${simulationTime.format("YYYY-MM-DD HH:mm")}"`);
-
-            await Sleep("100");
+            await household.influx.updateDB("resid", "Residual_Meter", "energy", residualEnergyInKWh, simulationTime.toDate())
+            await household.influx.updateDB("resid", "Residual_Meter", "power", residualEnergyInKWh/((simulationStepSize / 1000) / 3600), simulationTime.toDate())
         }
+
+        simulationTime.add(simulationStepSize, 'millisecond');
+        await Sleep(simulationTimeGranularity);
     }
 })();

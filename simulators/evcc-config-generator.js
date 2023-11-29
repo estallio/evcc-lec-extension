@@ -1,26 +1,39 @@
-import yaml from 'js-yaml';
-import config from './simulation-configs.js';
 import fs from 'fs';
+import yaml from 'js-yaml';
 
+import {
+    generateHouseholdsConfig,
+    simulationTimeGranularity,
+    simulationStepSize,
+    evccInterval,
+    simulationStartTime,
+} from './simulation-configs.js';
 
-const {households: householdsConfig} = config;
+const householdsConfig = generateHouseholdsConfig();
 
 for (const household of householdsConfig) {
     const evccConfig = {};
 
-    evccConfig.log = "debug"
-    evccConfig.interval = "1s"
+    // evcc needs a go time.Duration Object which can be formatted using "ms" or "s" etc.
+    evccConfig.interval = evccInterval;
+    evccConfig.simulationTimeGranularity = simulationTimeGranularity + "ms";
+    evccConfig.simulationStepSize = simulationStepSize + "ms";
+    evccConfig.simulationStartTime = simulationStartTime;
 
     evccConfig.site = {
-        title: household.name, meters: {
-            grid: "smartMeter", pv: "pv1", battery: "battery1"
-        }
-    }
+        title: household.name,
+        meters: {
+            grid: "smartMeter",
+            pv: "pv1",
+            battery: "battery1",
+        },
+    };
 
     //Influx rename bucket -> database
     let influx = household.influx
     influx.database = influx.bucket
     delete influx.bucket
+    
     evccConfig.influx = influx
 
     // custom meter
@@ -219,7 +232,9 @@ for (const household of householdsConfig) {
     let s = yaml.dump(evccConfig)
     fs.writeFile(`evcc-configs/evcc-${household.name.replace(" ", "-")}.yml`, s, (err) => {
         if (err) throw err
-    })
+    });
 
-    console.log(s)
+    // console.log(s)
 }
+
+console.log("Generation finished");
