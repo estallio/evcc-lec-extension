@@ -126,7 +126,7 @@ func runRoot(cmd *cobra.Command, args []string) {
 	}
 
 	// global time config
-	util.ConfigureInstance(conf.SimulationTimeGranularity, conf.SimulationStepSize)
+	util.ConfigureInstance(conf.SimulationTimeGranularity, conf.SimulationStepSize, conf.SimulationStartTime)
 
 	// network config
 	if viper.GetString("uri") != "" {

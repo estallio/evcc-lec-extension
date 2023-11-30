@@ -11,7 +11,7 @@ import got from 'got';
 const simulationTimeGranularity = 10; // every simulationTimeGranularity step 1 simulationStepSize in [ms]
 const simulationStepSize = 1000 * 60; // every simulationTimeGranularity step 1 simulationStepSize in [ms]
 const evccInterval = simulationTimeGranularity; // evcc request loop interval
-const simulationStartTime = '2022-09-01T00:00:00';
+const simulationStartTime = '2023-11-30T12:00:00+01:00'; // +01:00 = vienna time - must be present in the exact RFC3339 format (https://www.rfc-editor.org/rfc/rfc3339#section-5.8)
 
 export {
     generateHouseholdsConfig,

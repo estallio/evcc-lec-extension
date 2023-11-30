@@ -55,6 +55,7 @@ var conf = globalConfig{
 	Interval:                  10 * time.Second,
 	SimulationTimeGranularity: 1 * time.Second,
 	SimulationStepSize:        1 * time.Second,
+	SimulationStartTime:       time.Now(),
 	Log:                       "info",
 	Network: networkConfig{
 		Schema: "http",
@@ -83,6 +84,7 @@ type globalConfig struct {
 	Interval                  time.Duration
 	SimulationTimeGranularity time.Duration
 	SimulationStepSize        time.Duration
+	SimulationStartTime       time.Time
 	Database                  dbConfig
 	Mqtt                      mqttConfig
 	ModbusProxy               []proxyConfig
