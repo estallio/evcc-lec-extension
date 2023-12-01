@@ -7,6 +7,7 @@ import {
     simulationStepSize,
     evccInterval,
     simulationStartTime,
+    centralClockPort,
 } from './simulation-configs.js';
 
 const householdsConfig = generateHouseholdsConfig();
@@ -19,6 +20,7 @@ for (const household of householdsConfig) {
     evccConfig.simulationTimeGranularity = simulationTimeGranularity + "ms";
     evccConfig.simulationStepSize = simulationStepSize + "ms";
     evccConfig.simulationStartTime = simulationStartTime;
+    evccConfig.centralClockPort = centralClockPort;
 
     evccConfig.site = {
         title: household.name,

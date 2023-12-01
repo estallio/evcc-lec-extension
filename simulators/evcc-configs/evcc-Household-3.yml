@@ -1,7 +1,7 @@
 interval: 10
 simulationTimeGranularity: 10ms
 simulationStepSize: 60000ms
-simulationStartTime: '2022-09-01T00:00:00'
+simulationStartTime: '2018-11-30T12:00:00+01:00'
 site:
   title: Household 3
   meters:

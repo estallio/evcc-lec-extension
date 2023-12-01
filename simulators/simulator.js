@@ -1,4 +1,6 @@
 import moment from 'moment';
+import express from 'express';
+import _ from 'lodash';
 
 import {
     generateHouseholdsConfig,
@@ -6,6 +8,7 @@ import {
     simulationTimeGranularity,
     simulationStepSize,
     simulationStartTime,
+    centralClockPort,
 } from './simulation-configs.js';
 
 import Battery from './battery-simulator.js';
@@ -63,11 +66,13 @@ function Sleep(milliseconds) {
         households.push(household);
     }
 
+
+
     const simulationTime = moment(simulationStartTime);
 
     console.log("Starting simulation...");
 
-    console.log(1, "sec in realtime is ", (1 / simulationTimeGranularity) * simulationStepSize, "sec in simulation time");
+    console.log("Time resulution:", 1, "sec in realtime is", (1 / simulationTimeGranularity) * simulationStepSize, "sec in simulation time");
 
     setInterval(() => {
         console.log("Simulation time: " + simulationTime.toDate());
@@ -75,9 +80,7 @@ function Sleep(milliseconds) {
 
     // be careful: input parameters are in seconds and milliseconds
 
-    // simulation loop
-    for (;;) {
-        
+    const simulateOneStep = async () => {
         // console.log("Simulation time: " + simulationTime.toDate());
         
         for (const household of households) {
@@ -127,6 +130,52 @@ function Sleep(milliseconds) {
         }
 
         simulationTime.add(simulationStepSize, 'millisecond');
+
+        // TODO: remove this line later
         await Sleep(simulationTimeGranularity);
-    }
+    };
+
+
+
+    // setup centralClock
+    const app = express();
+
+    const instanceNames = households.map(h => h.name);
+    let waitingInstances = new Map();
+
+    app.get('/', async (req, res) => {
+        const instanceName = req.query.instanceName;
+
+        let instanceResolve;
+        const instancePromise = new Promise((resolve, reject) => {
+            instanceResolve = resolve;
+        });
+        instancePromise.resolve = instanceResolve;
+
+        waitingInstances.set(instanceName, instancePromise);
+
+        // first "if" only prevents unnecessary "detailed" checks - maybe superflously
+        if (waitingInstances.keys().length >= households.length) {
+            // check if all instances are present in the map
+            if (_.isEqual(_.intersection(waitingInstances.keys(), instanceNames), instanceNames)) {
+                await simulateOneStep();
+                
+                // resume all waiting instances
+                waitingInstances.forEach((value, key, map) => value.resolve());
+                
+                // reset map
+                waitingInstances = new Map();
+            }
+        }
+
+        // wait for the simulation step
+        await instancePromise;
+
+        // answer request
+        res.json();
+    });
+
+    app.listen(centralClockPort, () => {
+        console.log(`centralClock listening on port ${centralClockPort}`);
+    });
 })();

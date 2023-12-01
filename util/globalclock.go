@@ -13,6 +13,7 @@ var globalClock clock.Clock
 
 var logger = NewLogger("clock")
 
+// TODO: rename this file with package util ("util.GetInstance") to "globalClock.GetInstance"
 func GetInstance() clock.Clock {
 	if globalClock == nil {
 		lock.Lock()

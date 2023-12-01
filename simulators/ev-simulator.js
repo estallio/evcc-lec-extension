@@ -112,7 +112,7 @@ export default class EV {
 
         app.listen(this.port, () => {
           console.log(`ev simulator listening on port ${this.port}`);
-        })
+        });
     }
 
     update(timespan) {

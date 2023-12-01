@@ -8,10 +8,13 @@ import got from 'got';
  * simulationStepSize = 15
  * -> every second, the simulation-clock is fast-forwarded by 15s
  */
-const simulationTimeGranularity = 10; // every simulationTimeGranularity step 1 simulationStepSize in [ms]
-const simulationStepSize = 1000 * 60; // every simulationTimeGranularity step 1 simulationStepSize in [ms]
+// TODO: remove time granularity? maybe only needed for evcc interval
+const simulationTimeGranularity = 10; // every simulationTimeGranularity the simulation steps one simulationStepSize forward in [ms]
+const simulationStepSize = 1000 * 60; // every simulationTimeGranularity the simulation steps one simulationStepSize forward in [ms]
 const evccInterval = simulationTimeGranularity; // evcc request loop interval
-const simulationStartTime = '2023-11-30T12:00:00+01:00'; // +01:00 = vienna time - must be present in the exact RFC3339 format (https://www.rfc-editor.org/rfc/rfc3339#section-5.8)
+const simulationStartTime = '2018-11-30T00:00:00+01:00'; // +01:00 = vienna time - must be present in the exact RFC3339 format (https://www.rfc-editor.org/rfc/rfc3339#section-5.8)
+
+const centralClockPort = 7069;
 
 export {
     generateHouseholdsConfig,
@@ -20,10 +23,11 @@ export {
     simulationStepSize,
     evccInterval,
     simulationStartTime,
+    centralClockPort,
 };
 
 // generates a bucket for a household
-// influx token with org-previledges is needed
+// !important: influx token with org-previledges is needed
 async function setupInfluxForHousehold(household) {
 
     const influxInstance = household.influx.url;
@@ -99,7 +103,9 @@ function createHouseholdObject(num, webPort, pvP, pvAzimuth, pvPort, evLocation,
     const influxOrganisation = process.env.INFLUX_ORGANISATION;
 
     return {
-        name: `Household ${num}`, port: webPort, pvs: [{
+        name: `Household ${num}`,
+        port: webPort,
+        pvs: [{
             file: `./production_values/pv_sim_export_${pvP}_${pvAzimuth}_45.json`,
             port: pvPort,
         }], evs: [{
@@ -132,8 +138,8 @@ function createHouseholdObject(num, webPort, pvP, pvAzimuth, pvPort, evLocation,
             org: influxOrganisation,
         }, smartMeter: {
             port: smartMeterPort,
-        }
-    }
+        },
+    };
 }
 
 function generateHouseholdsConfig() {
@@ -149,12 +155,14 @@ function generateHouseholdsConfig() {
 
     // the simulation data from the Load Profile Generator were iterated over a specific naming comventaion
     let pvPeakPower = 4000;
+
+    // every house gets a PV
     let pvAzimuth = [
-        0, 90, 180, 270,
-        0, 90, 180, 270,
-        0, 90, 180, 270,
-        0, 90, 180, 270,
-        0, 90, 180, 270,
+        0, 90, 180, 270, 0,
+        0, 90, 180, 270, 90,
+        0, 90, 180, 270, 180,
+        0, 90, 180, 270, 270,
+        0, 90, 180, 270, 0,
     ];
 
     console.log("Started household generation");
