@@ -3,11 +3,13 @@ package core
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math"
+	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
-	"github.com/avast/retry-go/v4"
 	"github.com/evcc-io/evcc/api"
 	"github.com/evcc-io/evcc/cmd/shutdown"
 	"github.com/evcc-io/evcc/core/coordinator"
@@ -845,17 +847,46 @@ func (site *Site) Run(stopC chan struct{}, interval time.Duration) {
 	loadpointChan := make(chan Updater)
 	go site.loopLoadpoints(loadpointChan)
 
-	ticker := time.NewTicker(interval)
+	// TODO "ticker.C" -> central global clock
+	centralClockURL := "http://localhost:7069" + string(conf.CentralClockPort)
+	params := url.Values{}
+	params.Add("instanceName", conf.Title)
+	centralClockURL = centralClockURL + "?" + params.Encode()
+	nextStepChan := make(chan string)
+
+	//ticker := time.NewTicker(interval)
 	site.update(<-loadpointChan) // start immediately
 
 	for {
 		select {
-		case <-ticker.C:
+		case <-nextStepChan:
 			site.update(<-loadpointChan)
+			// TODO I am (id) done -> central global clock
+			go makeHTTPRequest(centralClockURL, nextStepChan)
 		case lp := <-site.lpUpdateChan:
 			site.update(lp)
 		case <-stopC:
 			return
 		}
 	}
+}
+
+func makeHTTPRequest(url string, respChan chan<- string) {
+
+	resp, err := http.Get(url)
+	if err != nil {
+		respChan <- "ERROR" // Signal an error to the main goroutine
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		respChan <- "ERROR" // Signal an error to the main goroutine
+		return
+	}
+
+	// Send the response to the main goroutine through the channel
+	respChan <- string(body)
 }
