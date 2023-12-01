@@ -1,3 +1,38 @@
+# evcc Simulator Extension
+## Steps to run the simulator:
+1. Adjust the `./simulator/.env` file:
+```
+INFLUX_TOKEN=3kzcwoK73y7GyA-2jQyuVz1jP-QHUFoU9-x_xDjz-GSTKtdK_uo56QVMkiEBTFxCKTL7fN-y3QwyKPT6ogH1fw==
+INFLUX_ORGANISATION=org
+INFLUX_INSTANCE=http://localhost:8086
+```
+2. Install simulator dependencies:
+```
+cd ./simulator
+npm install
+```
+3. Generate the ecc config files (until now, 3 configs are generated)
+```
+cd ./simulator
+node evcc-config-generator.js
+```
+4. Run the simulator
+```
+cd ./simulator
+node simulator.js
+```
+5. In other terminals, run the instances:
+```
+Terminal 1:
+go run main.go --config ./simulators/evcc-configs/evcc-Household-1.yml
+Terminal 2:
+go run main.go --config ./simulators/evcc-configs/evcc-Household-2.yml
+Terminal 3:
+go run main.go --config ./simulators/evcc-configs/evcc-Household-3.yml
+```
+
+
+
 # evcc 🚘☀️
 
 [![Build Status](https://github.com/evcc-io/evcc/workflows/Build/badge.svg)](https://github.com/evcc-io/evcc/actions?query=workflow%3ABuild)
