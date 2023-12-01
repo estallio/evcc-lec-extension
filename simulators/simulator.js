@@ -5,7 +5,7 @@ import _ from 'lodash';
 import {
     generateHouseholdsConfig,
     setupInfluxForHousehold,
-    simulationTimeGranularity,
+    simulationDelay,
     simulationStepSize,
     simulationStartTime,
     centralClockPort,
@@ -69,12 +69,9 @@ function Sleep(milliseconds) {
     }
 
 
-
     const simulationTime = moment(simulationStartTime);
 
     console.log("Starting simulation...");
-
-    console.log("Time resulution:", 1, "sec in realtime is", (1 / simulationTimeGranularity) * simulationStepSize, "sec in simulation time");
 
     let lastTime = simulationTime.clone();
 
@@ -136,15 +133,16 @@ function Sleep(milliseconds) {
 
         simulationTime.add(simulationStepSize, 'millisecond');
 
-        if (simulationTimeGranularity !== 0) {
-            await Sleep(simulationTimeGranularity);
+        if (simulationDelay !== 0) {
+            await Sleep(simulationDelay);
         }
     };
 
 
-
     // setup centralClock
     const app = express();
+
+    let firstTime = true;
 
     // const instanceNames = households.map(h => h.name);
     let waitingInstances = new Map();
@@ -160,19 +158,21 @@ function Sleep(milliseconds) {
 
         waitingInstances.set(instanceName, instancePromise);
 
-        // first "if" only prevents unnecessary "detailed" checks - maybe superflously
-        if (waitingInstances.size >= 3) {
-            // check if all instances are present in the map
-
-            //if (_.isEqual(_.intersection(waitingInstances.keys(), instanceNames), instanceNames)) {
+        // check if all the other instances are already waiting
+        if (waitingInstances.size >= households.length) {
+            // first request-round is to wait for all instances
+            if (firstTime) {
+                firstTime = false;
+            } else {
+                // execute one simulation step
                 await simulateOneStep();
+            }
 
-                // resume all waiting instances
-                waitingInstances.forEach((value, key, map) => value.resolve());
+            // resume all waiting instances
+            waitingInstances.forEach((value, key, map) => value.resolve());
 
-                // reset map
-                waitingInstances = new Map();
-            //}
+            // reset map
+            waitingInstances = new Map();
         }
 
         // wait for the simulation step

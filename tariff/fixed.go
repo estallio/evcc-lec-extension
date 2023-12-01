@@ -37,7 +37,7 @@ func NewFixedFromConfig(other map[string]interface{}) (api.Tariff, error) {
 	}
 
 	t := &Fixed{
-		clock:   util.GetInstance(),
+		clock:   util.GetGlobalClock(),
 		dynamic: len(cc.Zones) > 1,
 	}
 

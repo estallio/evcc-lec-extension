@@ -3,9 +3,7 @@ import yaml from 'js-yaml';
 
 import {
     generateHouseholdsConfig,
-    simulationTimeGranularity,
     simulationStepSize,
-    evccInterval,
     simulationStartTime,
     centralClockPort,
 } from './simulation-configs.js';
@@ -16,8 +14,6 @@ for (const household of householdsConfig) {
     const evccConfig = {};
 
     // evcc needs a go time.Duration Object which can be formatted using "ms" or "s" etc.
-    evccConfig.interval = evccInterval + "ms";
-    evccConfig.simulationTimeGranularity = simulationTimeGranularity + "ms";
     evccConfig.simulationStepSize = simulationStepSize + "ms";
     evccConfig.simulationStartTime = new Date(simulationStartTime);
 

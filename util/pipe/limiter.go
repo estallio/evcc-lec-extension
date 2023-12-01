@@ -29,7 +29,7 @@ type Deduplicator struct {
 // NewDeduplicator creates Deduplicator
 func NewDeduplicator(interval time.Duration, filter ...string) Piper {
 	l := &Deduplicator{
-		clock:    util.GetInstance(),
+		clock:    util.GetGlobalClock(),
 		interval: interval,
 		filter:   make(map[string]interface{}),
 		cache:    make(map[string]cacheItem),
@@ -74,7 +74,7 @@ type Limiter struct {
 // NewLimiter creates limiter
 func NewLimiter(interval time.Duration) Piper {
 	l := &Limiter{
-		clock:    util.GetInstance(),
+		clock:    util.GetGlobalClock(),
 		interval: interval,
 		cache:    make(map[string]cacheItem),
 	}

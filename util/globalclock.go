@@ -7,46 +7,37 @@ import (
 	"github.com/benbjohnson/clock"
 )
 
+var logger = NewLogger("clock")
+
 var lock = &sync.Mutex{}
 
 var globalClock clock.Clock
+var stepSize time.Duration
 
-var logger = NewLogger("clock")
+func ConfigureGlobalClock(simulationStepSize time.Duration, simulationStartTime time.Time) {
+	globalClock = clock.NewMock()
+	globalClock.(*clock.Mock).Set(simulationStartTime)
 
-// TODO: rename this file with package util ("util.GetInstance") to "globalClock.GetInstance"
-func GetInstance() clock.Clock {
+	stepSize = simulationStepSize
+
+	logger.INFO.Printf("Creating Global Clock instance with time %s", globalClock.Now().String())
+}
+
+func GetGlobalClock() clock.Clock {
 	if globalClock == nil {
 		lock.Lock()
 		defer lock.Unlock()
+
 		if globalClock == nil {
-			ConfigureInstance(1*time.Second, 1*time.Second, time.Now())
+			ConfigureGlobalClock(1*time.Second, time.Now())
 		} else {
-			logger.INFO.Printf("Single instance already created.")
+			logger.INFO.Printf("Global Clock instance was already created.")
 		}
-	} else {
-		logger.INFO.Printf("Single instance already created.")
 	}
 
 	return globalClock
 }
 
-func ConfigureInstance(simulationTimeGranularity time.Duration, simulationStepSize time.Duration, simulationStartTime time.Time) {
-	globalClock = clock.NewMock()
-	globalClock.(*clock.Mock).Set(simulationStartTime)
-
-	if simulationTimeGranularity == 1*time.Second && simulationStepSize == 1*time.Second {
-		logger.INFO.Printf("Creating single instance now: Regular Clock with time %s", globalClock.Now().String())
-	} else {
-		logger.INFO.Printf("Creating single instance now: Fake Clock with time %s", globalClock.Now().String())
-
-		ticker := time.Tick(simulationTimeGranularity)
-		go func() {
-			for {
-				select {
-				case <-ticker:
-					globalClock.(*clock.Mock).Add(simulationStepSize)
-				}
-			}
-		}()
-	}
+func ForwardGlobalClock() {
+	globalClock.(*clock.Mock).Add(stepSize)
 }

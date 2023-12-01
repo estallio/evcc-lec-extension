@@ -1,5 +1,3 @@
-interval: 1ms
-simulationTimeGranularity: 1ms
 simulationStepSize: 15000ms
 simulationStartTime: 2012-11-29T23:00:00.000Z
 site:

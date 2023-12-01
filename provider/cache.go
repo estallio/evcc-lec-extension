@@ -56,7 +56,7 @@ var _ Cacheable[int64] = (*cached[int64])(nil)
 // ResettableCached wraps a getter with a cache. It returns a `Cacheable`.
 // Instead of the cached getter, the `Get()` and `Reset()` methods are exposed.
 func ResettableCached[T any](g func() (T, error), cache time.Duration) *cached[T] {
-	clock := util.GetInstance()
+	clock := util.GetGlobalClock()
 	c := &cached[T]{
 		clock: clock,
 		cache: cache,

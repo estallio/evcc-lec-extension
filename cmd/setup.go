@@ -52,11 +52,10 @@ import (
 )
 
 var conf = globalConfig{
-	Interval:                  10 * time.Second,
-	SimulationTimeGranularity: 1 * time.Second,
-	SimulationStepSize:        1 * time.Second,
-	SimulationStartTime:       time.Now(),
-	Log:                       "info",
+	Interval:            10 * time.Second,
+	SimulationStepSize:  1 * time.Second,
+	SimulationStartTime: time.Now(),
+	Log:                 "info",
 	Network: networkConfig{
 		Schema: "http",
 		Host:   "evcc.local",
@@ -72,34 +71,33 @@ var conf = globalConfig{
 }
 
 type globalConfig struct {
-	URI                       interface{} // TODO deprecated
-	Network                   networkConfig
-	Log                       string
-	SponsorToken              string
-	Plant                     string // telemetry plant id
-	Telemetry                 bool
-	Metrics                   bool
-	Profile                   bool
-	Levels                    map[string]string
-	Interval                  time.Duration
-	SimulationTimeGranularity time.Duration
-	SimulationStepSize        time.Duration
-	SimulationStartTime       time.Time
-	Database                  dbConfig
-	Mqtt                      mqttConfig
-	ModbusProxy               []proxyConfig
-	Javascript                []javascriptConfig
-	Go                        []goConfig
-	Influx                    server.InfluxConfig
-	EEBus                     map[string]interface{}
-	HEMS                      config.Typed
-	Messaging                 messagingConfig
-	Meters                    []config.Named
-	Chargers                  []config.Named
-	Vehicles                  []config.Named
-	Tariffs                   tariffConfig
-	Site                      map[string]interface{}
-	Loadpoints                []map[string]interface{}
+	URI                 interface{} // TODO deprecated
+	Network             networkConfig
+	Log                 string
+	SponsorToken        string
+	Plant               string // telemetry plant id
+	Telemetry           bool
+	Metrics             bool
+	Profile             bool
+	Levels              map[string]string
+	Interval            time.Duration
+	SimulationStepSize  time.Duration
+	SimulationStartTime time.Time
+	Database            dbConfig
+	Mqtt                mqttConfig
+	ModbusProxy         []proxyConfig
+	Javascript          []javascriptConfig
+	Go                  []goConfig
+	Influx              server.InfluxConfig
+	EEBus               map[string]interface{}
+	HEMS                config.Typed
+	Messaging           messagingConfig
+	Meters              []config.Named
+	Chargers            []config.Named
+	Vehicles            []config.Named
+	Tariffs             tariffConfig
+	Site                map[string]interface{}
+	Loadpoints          []map[string]interface{}
 }
 
 type mqttConfig struct {

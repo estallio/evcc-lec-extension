@@ -34,7 +34,7 @@ type Savings struct {
 }
 
 func NewSavings(tariffs tariff.Tariffs) *Savings {
-	clock := util.GetInstance()
+	clock := util.GetGlobalClock()
 	savings := &Savings{
 		clock:   clock,
 		tariffs: tariffs,

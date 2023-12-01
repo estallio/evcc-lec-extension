@@ -61,7 +61,7 @@ type CP struct {
 
 func NewChargePoint(log *util.Logger, id string, connector int, timeout time.Duration) *CP {
 	return &CP{
-		clock:        util.GetInstance(),
+		clock:        util.GetGlobalClock(),
 		log:          log,
 		id:           id,
 		connector:    connector,

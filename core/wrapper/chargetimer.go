@@ -22,7 +22,7 @@ type ChargeTimer struct {
 // start and stop events
 func NewChargeTimer() *ChargeTimer {
 	return &ChargeTimer{
-		clck: util.GetInstance(),
+		clck: util.GetGlobalClock(),
 	}
 }
 

@@ -843,31 +843,35 @@ func (site *Site) loopLoadpoints(next chan<- Updater) {
 func (site *Site) Run(stopC chan struct{}, interval time.Duration) {
 	site.Health = NewHealth(time.Minute + interval)
 
-	if max := 30 * time.Second; interval < max {
-		site.log.WARN.Printf("interval <%.0fs can lead to unexpected behavior, see https://docs.evcc.io/docs/reference/configuration/interval", max.Seconds())
-	}
+	/*
+		if max := 30 * time.Second; interval < max {
+			site.log.WARN.Printf("interval <%.0fs can lead to unexpected behavior, see https://docs.evcc.io/docs/reference/configuration/interval", max.Seconds())
+		}
+	*/
 
 	loadpointChan := make(chan Updater)
 	go site.loopLoadpoints(loadpointChan)
 
-	// TODO "ticker.C" -> central global clock
 	centralClockURL := "http://localhost:" + fmt.Sprint(site.CentralClockPort)
 	params := url.Values{}
 	params.Add("instanceName", site.Title)
 	centralClockURL = centralClockURL + "?" + params.Encode()
 	nextStepChan := make(chan string)
 
-	//ticker := time.NewTicker(interval)
-
-	site.update(<-loadpointChan) // start immediately
-
+	// before start, indicate that instance is ready by manually triggering the request
 	go makeHTTPRequest(centralClockURL, nextStepChan)
 
 	for {
 		select {
+		// wait until central clock simulator allows the next round
 		case <-nextStepChan:
+			// fetch all values in this round
 			site.update(<-loadpointChan)
-			// TODO I am (id) done -> central global clock
+
+			// forward global clock
+			util.ForwardGlobalClock()
+
+			// wait for next round
 			go makeHTTPRequest(centralClockURL, nextStepChan)
 		case lp := <-site.lpUpdateChan:
 			site.update(lp)

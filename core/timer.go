@@ -20,7 +20,7 @@ type Timer struct {
 // NewTimer creates timer that can expire
 func NewTimer() *Timer {
 	return &Timer{
-		clck: util.GetInstance(),
+		clck: util.GetGlobalClock(),
 	}
 }
 

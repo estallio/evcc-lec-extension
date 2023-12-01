@@ -3,26 +3,16 @@ import 'dotenv/config';
 import fs from "fs";
 import got from 'got';
 
-/**
- * simulationTimeGranularity = 1
- * simulationStepSize = 15
- * -> every second, the simulation-clock is fast-forwarded by 15s
- */
-// TODO: remove time granularity? maybe only needed for evcc interval
-const simulationTimeGranularity = 0; // every simulationTimeGranularity the simulation steps one simulationStepSize forward in [ms] - don't know if 0 is working because evcc disables adjustment of interval if 0
-const simulationStepSize = 1000 * 15; // (every 15s) // every simulationTimeGranularity the simulation steps one simulationStepSize forward in [ms]
-const evccInterval = simulationTimeGranularity; // evcc request loop interval
+const simulationDelay = 0; // indicates only how long the simulator should wait in [ms] after every simulation step
+const simulationStepSize = 1000 * 15; // specifies the simulation step size in [ms]
 const simulationStartTime = '2012-11-30T00:00:00+01:00'; // +01:00 = vienna time - must be present in the exact RFC3339 format (https://www.rfc-editor.org/rfc/rfc3339#section-5.8)
-
-// site-specific central variables (in evcc config file under site: root element)
-const centralClockPort = 7069;
+const centralClockPort = 7069; // evcc "site"-specific central variable (in the evcc config file, it is located under the "site:" element)
 
 export {
     generateHouseholdsConfig,
     setupInfluxForHousehold,
-    simulationTimeGranularity,
+    simulationDelay,
     simulationStepSize,
-    evccInterval,
     simulationStartTime,
     centralClockPort,
 };
