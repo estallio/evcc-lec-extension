@@ -1,4 +1,4 @@
-# evcc Simulator Extension
+# evcc Renewable Energy Community Simulator Extension
 ## Steps to run the simulator:
 1. Adjust the `./simulator/.env` file:
 ```
@@ -16,12 +16,17 @@ npm install
 cd ./simulator
 node evcc-config-generator.js
 ```
-4. Run the simulator
+4. Start up the Influx stack in a new terminal
+```
+cd ./simulator/influx
+docker-compose up
+```
+5. Run the simulator
 ```
 cd ./simulator
 node simulator.js
 ```
-5. In other terminals, run the instances:
+6. In other terminals, run the instances:
 ```
 Terminal 1:
 go run main.go --config ./simulators/evcc-configs/evcc-Household-1.yml
