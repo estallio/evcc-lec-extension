@@ -63,6 +63,8 @@ function Sleep(milliseconds) {
             household.evs.push(ev);
         }
 
+        household.name = householdConfig.name;
+
         households.push(household);
     }
 
@@ -82,7 +84,7 @@ function Sleep(milliseconds) {
 
     const simulateOneStep = async () => {
         // console.log("Simulation time: " + simulationTime.toDate());
-        
+
         for (const household of households) {
             let residualEnergyInKWh = 0;
 
@@ -111,7 +113,7 @@ function Sleep(milliseconds) {
                 // changes the residual value, therefore no '+='
                 residualEnergyInKWh = battery.update(simulationStepSize / 1000, residualEnergyInKWh); // to seconds
                 currentBatteryPower += battery.getCurrentPower();
-                
+
                 // const currentBatterySoC = battery.getCurrentSoC();
                 // await household.influx.updateDB("bat1", "Battery_Meter", "soc", currentBatterySoC, simulationTime.toDate())
                 await household.influx.updateDB("bat1", "Battery_Meter", "power", currentBatteryPower, simulationTime.toDate())
@@ -155,17 +157,18 @@ function Sleep(milliseconds) {
         waitingInstances.set(instanceName, instancePromise);
 
         // first "if" only prevents unnecessary "detailed" checks - maybe superflously
-        if (waitingInstances.keys().length >= households.length) {
+        if (waitingInstances.size >= households.length) {
             // check if all instances are present in the map
-            if (_.isEqual(_.intersection(waitingInstances.keys(), instanceNames), instanceNames)) {
+
+            //if (_.isEqual(_.intersection(waitingInstances.keys(), instanceNames), instanceNames)) {
                 await simulateOneStep();
-                
+
                 // resume all waiting instances
                 waitingInstances.forEach((value, key, map) => value.resolve());
-                
+
                 // reset map
                 waitingInstances = new Map();
-            }
+            //}
         }
 
         // wait for the simulation step
