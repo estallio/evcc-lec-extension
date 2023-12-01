@@ -76,8 +76,11 @@ function Sleep(milliseconds) {
 
     console.log("Time resulution:", 1, "sec in realtime is", (1 / simulationTimeGranularity) * simulationStepSize, "sec in simulation time");
 
+    let lastTime = simulationTime.clone();
+
     setInterval(() => {
-        console.log("Simulation time: " + simulationTime.toDate());
+        console.log("Simulation time: " + simulationTime.toDate(), "Simulation speed: " + simulationTime.diff(lastTime, 'minutes') + " min/s");
+        lastTime = simulationTime.clone();
     }, 1000);
 
     // be careful: input parameters are in seconds and milliseconds
@@ -97,7 +100,7 @@ function Sleep(milliseconds) {
                 residualEnergyInKWh += consumption.update(simulationStepSize / 1000); // to seconds
                 currentConsumptionPower += consumption.getCurrentPower();
 
-                await household.influx.updateDB("sm1", "Smart_Meter_Reading", "power", currentConsumptionPower, simulationTime.toDate());
+                household.influx.updateDB("sm1", "Smart_Meter_Reading", "power", currentConsumptionPower, simulationTime.toDate());
             }
 
             let currentPvPower = 0;
@@ -105,7 +108,7 @@ function Sleep(milliseconds) {
                 residualEnergyInKWh += pv.update(simulationStepSize / 1000); // to seconds
                 currentPvPower += pv.getCurrentPower();
 
-                await household.influx.updateDB("pv1", "PV_Inverter_Reading", "power", currentPvPower, simulationTime.toDate())
+                household.influx.updateDB("pv1", "PV_Inverter_Reading", "power", currentPvPower, simulationTime.toDate())
             }
 
             let currentBatteryPower = 0;
@@ -116,7 +119,7 @@ function Sleep(milliseconds) {
 
                 // const currentBatterySoC = battery.getCurrentSoC();
                 // await household.influx.updateDB("bat1", "Battery_Meter", "soc", currentBatterySoC, simulationTime.toDate())
-                await household.influx.updateDB("bat1", "Battery_Meter", "power", currentBatteryPower, simulationTime.toDate())
+                household.influx.updateDB("bat1", "Battery_Meter", "power", currentBatteryPower, simulationTime.toDate())
             }
 
             let currentEvChargingPower = 0;
@@ -127,14 +130,15 @@ function Sleep(milliseconds) {
 
             household.smartMeter.setResidualPower(-(currentConsumptionPower + currentPvPower + currentBatteryPower + currentEvChargingPower));
 
-            await household.influx.updateDB("resid", "Residual_Meter", "energy", residualEnergyInKWh, simulationTime.toDate())
-            await household.influx.updateDB("resid", "Residual_Meter", "power", residualEnergyInKWh/((simulationStepSize / 1000) / 3600), simulationTime.toDate())
+            household.influx.updateDB("resid", "Residual_Meter", "energy", residualEnergyInKWh, simulationTime.toDate())
+            household.influx.updateDB("resid", "Residual_Meter", "power", residualEnergyInKWh/((simulationStepSize / 1000) / 3600), simulationTime.toDate())
         }
 
         simulationTime.add(simulationStepSize, 'millisecond');
 
-        // TODO: remove this line later
-        await Sleep(simulationTimeGranularity);
+        if (simulationTimeGranularity !== 0) {
+            await Sleep(simulationTimeGranularity);
+        }
     };
 
 
@@ -142,7 +146,7 @@ function Sleep(milliseconds) {
     // setup centralClock
     const app = express();
 
-    const instanceNames = households.map(h => h.name);
+    // const instanceNames = households.map(h => h.name);
     let waitingInstances = new Map();
 
     app.get('/', async (req, res) => {
@@ -157,7 +161,7 @@ function Sleep(milliseconds) {
         waitingInstances.set(instanceName, instancePromise);
 
         // first "if" only prevents unnecessary "detailed" checks - maybe superflously
-        if (waitingInstances.size >= households.length) {
+        if (waitingInstances.size >= 3) {
             // check if all instances are present in the map
 
             //if (_.isEqual(_.intersection(waitingInstances.keys(), instanceNames), instanceNames)) {

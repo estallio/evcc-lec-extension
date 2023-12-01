@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/evcc-io/evcc/api"
 	"github.com/evcc-io/evcc/cmd/shutdown"
 	"github.com/evcc-io/evcc/core/coordinator"
@@ -59,7 +60,8 @@ type Site struct {
 	log *util.Logger
 
 	// configuration
-	Title                             string       `mapstructure:"title"`         // UI title
+	Title                             string       `mapstructure:"title"` // UI title
+	CentralClockPort                  int32        `mapstructure:"centralClockPort"`
 	Voltage                           float64      `mapstructure:"voltage"`       // Operating voltage. 230V for Germany.
 	ResidualPower                     float64      `mapstructure:"residualPower"` // PV meter only: household usage. Grid meter: household safety margin
 	Meters                            MetersConfig // Meter references
@@ -88,6 +90,7 @@ type Site struct {
 	batterySoc   float64 // Battery soc
 
 	publishCache map[string]any // store last published values to avoid unnecessary republishing
+
 }
 
 // MetersConfig contains the loadpoint's meter configuration
@@ -848,14 +851,17 @@ func (site *Site) Run(stopC chan struct{}, interval time.Duration) {
 	go site.loopLoadpoints(loadpointChan)
 
 	// TODO "ticker.C" -> central global clock
-	centralClockURL := "http://localhost:7069" + string(conf.CentralClockPort)
+	centralClockURL := "http://localhost:" + fmt.Sprint(site.CentralClockPort)
 	params := url.Values{}
-	params.Add("instanceName", conf.Title)
+	params.Add("instanceName", site.Title)
 	centralClockURL = centralClockURL + "?" + params.Encode()
 	nextStepChan := make(chan string)
 
 	//ticker := time.NewTicker(interval)
+
 	site.update(<-loadpointChan) // start immediately
+
+	go makeHTTPRequest(centralClockURL, nextStepChan)
 
 	for {
 		select {

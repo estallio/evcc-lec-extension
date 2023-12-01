@@ -1,9 +1,10 @@
-interval: 10
-simulationTimeGranularity: 10ms
-simulationStepSize: 60000ms
-simulationStartTime: '2018-11-30T12:00:00+01:00'
+interval: 1ms
+simulationTimeGranularity: 1ms
+simulationStepSize: 15000ms
+simulationStartTime: 2012-11-29T23:00:00.000Z
 site:
   title: Household 1
+  centralClockPort: 7069
   meters:
     grid: smartMeter
     pv: pv1
@@ -148,10 +149,3 @@ loadpoints:
     vehicle: vehicle1
     meter: wallbox1
     mode: 'off'
-tariffs:
-  currency: EUR
-  grid:
-    type: awattar
-    region: at
-    charges: 0
-    tax: 0

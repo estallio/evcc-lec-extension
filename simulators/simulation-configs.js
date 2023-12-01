@@ -9,11 +9,12 @@ import got from 'got';
  * -> every second, the simulation-clock is fast-forwarded by 15s
  */
 // TODO: remove time granularity? maybe only needed for evcc interval
-const simulationTimeGranularity = 10; // every simulationTimeGranularity the simulation steps one simulationStepSize forward in [ms]
-const simulationStepSize = 1000 * 60; // every simulationTimeGranularity the simulation steps one simulationStepSize forward in [ms]
+const simulationTimeGranularity = 0; // every simulationTimeGranularity the simulation steps one simulationStepSize forward in [ms] - don't know if 0 is working because evcc disables adjustment of interval if 0
+const simulationStepSize = 1000 * 15; // (every 15s) // every simulationTimeGranularity the simulation steps one simulationStepSize forward in [ms]
 const evccInterval = simulationTimeGranularity; // evcc request loop interval
-const simulationStartTime = '2018-11-30T00:00:00+01:00'; // +01:00 = vienna time - must be present in the exact RFC3339 format (https://www.rfc-editor.org/rfc/rfc3339#section-5.8)
+const simulationStartTime = '2012-11-30T00:00:00+01:00'; // +01:00 = vienna time - must be present in the exact RFC3339 format (https://www.rfc-editor.org/rfc/rfc3339#section-5.8)
 
+// site-specific central variables (in evcc config file under site: root element)
 const centralClockPort = 7069;
 
 export {

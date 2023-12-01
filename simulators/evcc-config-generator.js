@@ -16,14 +16,14 @@ for (const household of householdsConfig) {
     const evccConfig = {};
 
     // evcc needs a go time.Duration Object which can be formatted using "ms" or "s" etc.
-    evccConfig.interval = evccInterval;
+    evccConfig.interval = evccInterval + "ms";
     evccConfig.simulationTimeGranularity = simulationTimeGranularity + "ms";
     evccConfig.simulationStepSize = simulationStepSize + "ms";
-    evccConfig.simulationStartTime = simulationStartTime;
-    evccConfig.centralClockPort = centralClockPort;
+    evccConfig.simulationStartTime = new Date(simulationStartTime);
 
     evccConfig.site = {
         title: household.name,
+        centralClockPort: centralClockPort,
         meters: {
             grid: "smartMeter",
             pv: "pv1",
@@ -221,6 +221,10 @@ for (const household of householdsConfig) {
         mode: "off"
     }]
 
+    /**
+     * TODO: add tariffs again
+     */
+    /*
     evccConfig.tariffs = {
         currency: "EUR",
         grid: {
@@ -230,8 +234,10 @@ for (const household of householdsConfig) {
             tax: 0 // optional, additional tax (0.1 for 10%)
         }
     }
+    */
 
-    let s = yaml.dump(evccConfig)
+    let s = yaml.dump(evccConfig);
+
     fs.writeFile(`evcc-configs/evcc-${household.name.replace(" ", "-")}.yml`, s, (err) => {
         if (err) throw err
     });
