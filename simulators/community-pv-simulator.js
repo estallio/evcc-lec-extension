@@ -3,7 +3,7 @@ import express from 'express';
 
 import Smooth from './utils/Smooth.js';
 
-export default class PV {
+export default class CommunityPV {
     constructor(config) {
         this.file = config.file;
 
