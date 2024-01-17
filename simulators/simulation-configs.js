@@ -25,7 +25,7 @@ async function setupInfluxForHousehold(household) {
     const influxBucket = household.influx.bucket;
     const influxToken = household.influx.token;
     const influxOrganisation = household.influx.org;
-    
+
     let data;
 
     // normally, influxdb forbids the API to write to organisation with: write:orgs is unauthorized
@@ -158,7 +158,7 @@ function generateHouseholdsConfig() {
 
     console.log("Started household generation");
 
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 1; i++) {
         for (let j = 1; j <= 3; j++) {
             evccInstanceNumber += 1
 

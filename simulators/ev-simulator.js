@@ -134,7 +134,7 @@ export default class EV {
         this.currentSeconds += timespan;
 
         if ((speed !== 0 || location !== 'Home') && this.status !== 'A') {
-            // car is not at home or driving around - unplug automatically if connected            
+            // car is not at home or driving around - unplug automatically if connected
             this.status = 'A';
             this.enabled = false;
             this.currentPower = 0;

@@ -1,13 +1,16 @@
 import { InfluxDB } from "@influxdata/influxdb-client";
-import moment from "moment/moment.js";
 import express from "express";
 import dotenv from "dotenv";
+import moment from "moment";
 
 dotenv.config();
 
 function awattarDataObject(startTime, endTime, price) {
     return {
-        start_timestamp: startTime.unix(), end_timestamp: endTime.unix(), marketprice: price, unit: "Eur/MWh"
+        start_timestamp: startTime.unix(),
+        end_timestamp: endTime.unix(),
+        marketprice: price,
+        unit: "Eur/MWh",
     };
 }
 
@@ -30,42 +33,56 @@ function createTariffObject(result_arr, startDate, endDate) {
         results_nominated.push(Math.round((v / max_element) * 100));
     }
 
-    let startDay = startDate.clone();
-    startDay.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
-    console.log(`${startDate.toDate()} ___ ${endDate.toDate()}`);
+    let startDateTemp = moment("2024-01-17T00:00:00+01:00");
+    startDateTemp.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
+    console.log(`Return ${startDateTemp.toDate()}`);
     let awattarArr = [];
-    let endDateTemp = startDay.clone();
-    let startDateTemp = startDay.clone();
-    startDateTemp.add(1, "ms");
-    endDateTemp.add(-1, "ms");
+    let endDateTemp = startDateTemp.clone();
     for (const v of results_nominated) {
         endDateTemp.add(1, "h");
-        if (startDateTemp.isAfter(startDate) && endDateTemp.isBefore(endDate)) {
-            awattarArr.push(awattarDataObject(startDate, endDateTemp, v));
-        }
+        awattarArr.push(awattarDataObject(startDateTemp, endDateTemp, v));
         startDateTemp.add(1, "h");
     }
     return { "object": "list", "data": awattarArr };
 }
 
 export default class Aggregator {
-    constructor(startTime) {
+    constructor(startTime, num) {
         let url = process.env.INFLUX_INSTANCE;
         let token = process.env.INFLUX_TOKEN;
         let org = process.env.INFLUX_ORGANISATION;
         this.time = startTime;
+        this.num = num;
 
         //console.log(url, token, org);
 
         const client = new InfluxDB({ url, token });
         this.queryClient = client.getQueryApi(org);
+
+        const app = express();
+
+        app.get("/v1/marketdata", async (req, res) => {
+            let start = this.time.clone();
+            start.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
+            let end = start.clone();
+            end.add(1, "d");
+
+            console.log(`${start.toDate()} --- ${end.toDate()}`);
+            res.json(await fetchData(this, start.clone(), end.clone()));
+        });
+
+        app.listen(3333, () => {
+            console.log(`Aggregator simulator listening on port ${3333}`);
+        });
+
+
     }
 
     setCurrentStartTime(time) {
         this.time = time;
     }
 
-    getGridPower(startDate, endDate, numHouseholds) {
+    getGridPower(startDate, endDate) {
         let timeResolution = "1h";
         let startDay = startDate.clone();
         startDay.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
@@ -76,7 +93,7 @@ export default class Aggregator {
         myStopT = ${endDay.toISOString()}
         `;
 
-        for (let i = 1; i <= numHouseholds; i++) {
+        for (let i = 1; i <= this.num; i++) {
             fluxQuery += `
         grid${i} = from(bucket: "sim_${i}")
           |> range(start: myStartT, stop: myStopT)
@@ -88,7 +105,7 @@ export default class Aggregator {
         }
 
         fluxQuery += "\n\tunion(tables: [ ";
-        for (let i = 1; i <= numHouseholds; i++) {
+        for (let i = 1; i <= this.num; i++) {
             fluxQuery += `grid${i}, `;
         }
 
@@ -114,41 +131,14 @@ export default class Aggregator {
     }
 }
 
-async function fetchData(aggregator, start, end, num) {
+async function fetchData(aggregator, start, end) {
     try {
         // Code here will execute after the query is complete
-        let res = await aggregator.getGridPower(start, end, num);
-        return res;
+        return await aggregator.getGridPower(start, end);
     } catch (error) {
         // Handle errors
         console.error("Error fetching data:", error);
     }
 }
 
-
-const app = express();
-
-app.get("/v1/marketdata", async (req, res) => {
-    let start = moment("2012-11-30T00:00:00+01:00");
-    let end = start.clone();
-    end.add(1, "d");
-    if (req.query.start !== undefined) {
-        start = moment.unix(req.query.start);
-    }
-    if (req.query.end !== undefined) {
-        end = moment.unix(req.query.end);
-    }
-
-    console.log(`${start.toDate()} --- ${end.toDate()}`);
-    let aggregator = new Aggregator();
-    res.json(await fetchData(aggregator, start.clone(), end.clone(), 3));
-});
-
-app.listen(3333, () => {
-    console.log(`consumption simulator listening on port ${3333}`);
-});
-
-
-
-
-
+// new Aggregator(moment("2012-11-30T00:00:00+01:00"), 3);

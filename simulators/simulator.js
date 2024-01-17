@@ -16,6 +16,7 @@ import PV from './pv-simulator.js';
 import Consumption from './consumption-simulator.js';
 import EV from './ev-simulator.js';
 import SmartMeter from "./smart-meter-simulator.js";
+import Aggregator from "./aggregator.js";
 
 import InfluxWrite from "./influx-write.js";
 
@@ -71,6 +72,7 @@ function Sleep(milliseconds) {
 
     const simulationTime = moment(simulationStartTime);
 
+    let aggregator = new Aggregator(simulationTime.clone(), householdsConfig.length);
     console.log("Starting simulation...");
 
     let lastTime = simulationTime.clone();
@@ -132,6 +134,7 @@ function Sleep(milliseconds) {
         }
 
         simulationTime.add(simulationStepSize, 'millisecond');
+        aggregator.setCurrentStartTime(simulationTime.clone());
 
         if (simulationDelay !== 0) {
             await Sleep(simulationDelay);

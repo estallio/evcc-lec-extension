@@ -1,12 +1,12 @@
-import fs from 'fs';
-import yaml from 'js-yaml';
+import fs from "fs";
+import yaml from "js-yaml";
 
 import {
     generateHouseholdsConfig,
     simulationStepSize,
     simulationStartTime,
-    centralClockPort,
-} from './simulation-configs.js';
+    centralClockPort
+} from "./simulation-configs.js";
 
 const householdsConfig = generateHouseholdsConfig();
 
@@ -23,16 +23,23 @@ for (const household of householdsConfig) {
         meters: {
             grid: "smartMeter",
             pv: "pv1",
-            battery: "battery1",
+            battery: "battery1"
+        }
+    };
+
+    evccConfig.tariffs = {
+        grid: {
+            type: "awattar",
+            region: "de",
         },
     };
 
     //Influx rename bucket -> database
-    let influx = household.influx
-    influx.database = influx.bucket
-    delete influx.bucket
-    
-    evccConfig.influx = influx
+    let influx = household.influx;
+    influx.database = influx.bucket;
+    delete influx.bucket;
+
+    evccConfig.influx = influx;
 
     // custom meter
     evccConfig.meters =
@@ -44,26 +51,26 @@ for (const household of householdsConfig) {
                 uri: `http://localhost:${household.smartMeter.port}/residualPower`,
                 method: "GET",
                 headers: {
-                    'content-type': "application/json"
+                    "content-type": "application/json"
                 },
                 scale: 1000, //We return kW
                 timeout: "10s"
             }
         },
-        {
-            name: "meter1",
-            type: "custom",
-            power: {
-                source: "http",
-                uri: `http://localhost:${household.consumptions[0].port}/meter/currentconsumption`,
-                method: "GET",
-                headers: {
-                    'content-type': "application/json"
-                },
-                scale: 1000, //We return kW
-                timeout: "10s"
-            }
-        },
+            {
+                name: "meter1",
+                type: "custom",
+                power: {
+                    source: "http",
+                    uri: `http://localhost:${household.consumptions[0].port}/meter/currentconsumption`,
+                    method: "GET",
+                    headers: {
+                        "content-type": "application/json"
+                    },
+                    scale: 1000, //We return kW
+                    timeout: "10s"
+                }
+            },
             {
                 name: "pv1",
                 type: "custom",
@@ -72,10 +79,10 @@ for (const household of householdsConfig) {
                     uri: `http://localhost:${household.pvs[0].port}/pv/currentproduction`,
                     method: "GET",
                     headers: {
-                        'content-type': "application/json"
+                        "content-type": "application/json"
                     },
                     timeout: "10s",
-                    scale: 1000, //We return kW
+                    scale: 1000 //We return kW
                 }
             },
             {
@@ -86,10 +93,10 @@ for (const household of householdsConfig) {
                     uri: `http://localhost:${household.wallboxes[0].port}/meter/currentpower`,
                     method: "GET",
                     headers: {
-                        'content-type': "application/json"
+                        "content-type": "application/json"
                     },
                     timeout: "10s",
-                    scale: 1000, //We return kW
+                    scale: 1000 //We return kW
                 }
             },
             {
@@ -100,7 +107,7 @@ for (const household of householdsConfig) {
                     uri: `http://localhost:${household.batteries[0].port}/battery/currentpower`,
                     method: "GET",
                     headers: {
-                        'content-type': "application/json"
+                        "content-type": "application/json"
                     },
                     scale: 1000, //We return kW
                     timeout: "10s"
@@ -110,7 +117,7 @@ for (const household of householdsConfig) {
                     uri: `http://localhost:${household.batteries[0].port}/battery/soc`,
                     method: "GET",
                     headers: {
-                        'content-type': "application/json"
+                        "content-type": "application/json"
                     },
                     scale: 100, //We return a value from 0 to 1
                     timeout: "10s"
@@ -120,14 +127,14 @@ for (const household of householdsConfig) {
                     uri: `http://localhost:${household.batteries[0].port}/battery/energy`,
                     method: "GET",
                     headers: {
-                        'content-type': "application/json"
+                        "content-type": "application/json"
                     },
                     timeout: "10s"
                 },
-                capacity: household.batteries[0].batterySizeInKWh,
+                capacity: household.batteries[0].batterySizeInKWh
 
             }
-        ]
+        ];
 
     evccConfig.vehicles = [{
         name: "vehicle1",
@@ -139,7 +146,7 @@ for (const household of householdsConfig) {
             uri: `http://localhost:${household.evs[0].port}/vehicle/soc`,
             method: "GET",
             headers: {
-                'content-type': "application/json"
+                "content-type": "application/json"
             },
             scale: 100, //We return a value from 0 to 1
             timeout: "10s"
@@ -149,7 +156,7 @@ for (const household of householdsConfig) {
             uri: `http://localhost:${household.evs[0].port}/vehicle/status`,
             method: "GET",
             headers: {
-                'content-type': "application/json"
+                "content-type": "application/json"
             },
             timeout: "10s"
         },
@@ -158,11 +165,11 @@ for (const household of householdsConfig) {
             uri: `http://localhost:${household.evs[0].port}/vehicle/range`,
             method: "GET",
             headers: {
-                'content-type': "application/json"
+                "content-type": "application/json"
             },
             timeout: "10s"
         }
-    }]
+    }];
 
     evccConfig.chargers = [{
         name: "charger1",
@@ -172,7 +179,7 @@ for (const household of householdsConfig) {
             uri: `http://localhost:${household.wallboxes[0].port}/charger/status`,
             method: "GET",
             headers: {
-                'content-type': "application/json"
+                "content-type": "application/json"
             },
             timeout: "10s"
         },
@@ -181,7 +188,7 @@ for (const household of householdsConfig) {
             uri: `http://localhost:${household.wallboxes[0].port}/charger/enabled`,
             method: "GET",
             headers: {
-                'content-type': "application/json"
+                "content-type": "application/json"
             },
             timeout: "10s"
         },
@@ -190,7 +197,7 @@ for (const household of householdsConfig) {
             uri: `http://localhost:${household.wallboxes[0].port}/charger/enable`,
             method: "POST",
             headers: {
-                'content-type': 'text/plain'
+                "content-type": "text/plain"
             },
             timeout: "10s"
         },
@@ -199,23 +206,23 @@ for (const household of householdsConfig) {
             uri: `http://localhost:${household.wallboxes[0].port}/charger/maxcurrent`,
             method: "POST",
             headers: {
-                'content-type': 'text/plain'
+                "content-type": "text/plain"
             },
             timeout: "10s"
-        },
-    }]
+        }
+    }];
 
     evccConfig.network = {
         port: household.port, schema: "http"
-    }
+    };
 
     evccConfig.loadpoints = [{
         title: "Garage",
         charger: "charger1",
         vehicle: "vehicle1",
         meter: "wallbox1",
-        mode: "off"
-    }]
+        mode: "minpv"
+    }];
 
     /**
      * TODO: add tariffs again
@@ -235,7 +242,7 @@ for (const household of householdsConfig) {
     let s = yaml.dump(evccConfig);
 
     fs.writeFile(`evcc-configs/evcc-${household.name.replace(" ", "-")}.yml`, s, (err) => {
-        if (err) throw err
+        if (err) throw err;
     });
 
     // console.log(s)
