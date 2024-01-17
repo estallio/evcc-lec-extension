@@ -1,23 +1,34 @@
-log: debug
-interval: 1s
+simulationStepSize: 15000ms
+simulationStartTime: 2012-11-29T23:00:00.000Z
 site:
   title: Household 6
+  centralClockPort: 7069
   meters:
-    grid: meter1
+    grid: smartMeter
     pv: pv1
     battery: battery1
 influx:
   url: http://localhost:8086
   token: >-
-    Gdb3i0opdlrh-MEQEYfPO_2AvZlE3sxrnF2s206sM_Dh95yy_UKP-K1ckhuho0NbuMPXBhzoI5bcY9OFkBQqKA==
-  org: home
+    3kzcwoK7Oy7Gyf-2jQyuVz8jP-QHUFoU9-x_xDjz-GSTKXdK_uo56QVMkiEBTFxCKTL7fN-y3QwyKPT6ogH1fw==
+  org: org
   database: sim_6
 meters:
+  - name: smartMeter
+    type: custom
+    power:
+      source: http
+      uri: http://localhost:9029/residualPower
+      method: GET
+      headers:
+        content-type: application/json
+      scale: 1000
+      timeout: 10s
   - name: meter1
     type: custom
     power:
       source: http
-      uri: http://localhost:9023/meter/currentconsumption
+      uri: http://localhost:9028/meter/currentconsumption
       method: GET
       headers:
         content-type: application/json
@@ -27,7 +38,7 @@ meters:
     type: custom
     power:
       source: http
-      uri: http://localhost:9020/pv/currentproduction
+      uri: http://localhost:9025/pv/currentproduction
       method: GET
       headers:
         content-type: application/json
@@ -37,7 +48,7 @@ meters:
     type: custom
     power:
       source: http
-      uri: http://localhost:9021/meter/currentpower
+      uri: http://localhost:9026/meter/currentpower
       method: GET
       headers:
         content-type: application/json
@@ -47,7 +58,7 @@ meters:
     type: custom
     power:
       source: http
-      uri: http://localhost:9022/battery/currentpower
+      uri: http://localhost:9027/battery/currentpower
       method: GET
       headers:
         content-type: application/json
@@ -55,7 +66,7 @@ meters:
       timeout: 10s
     soc:
       source: http
-      uri: http://localhost:9022/battery/soc
+      uri: http://localhost:9027/battery/soc
       method: GET
       headers:
         content-type: application/json
@@ -63,20 +74,20 @@ meters:
       timeout: 10s
     energy:
       source: http
-      uri: http://localhost:9022/battery/energy
+      uri: http://localhost:9027/battery/energy
       method: GET
       headers:
         content-type: application/json
       timeout: 10s
-    capacity: 50
+    capacity: 10
 vehicles:
   - name: vehicle1
     title: Vehicle 1
     type: custom
-    capacity: 10
+    capacity: 50
     soc:
       source: http
-      uri: http://localhost:9021/vehicle/soc
+      uri: http://localhost:9026/vehicle/soc
       method: GET
       headers:
         content-type: application/json
@@ -84,14 +95,14 @@ vehicles:
       timeout: 10s
     status:
       source: http
-      uri: http://localhost:9021/vehicle/status
+      uri: http://localhost:9026/vehicle/status
       method: GET
       headers:
         content-type: application/json
       timeout: 10s
     range:
       source: http
-      uri: http://localhost:9021/vehicle/range
+      uri: http://localhost:9026/vehicle/range
       method: GET
       headers:
         content-type: application/json
@@ -101,28 +112,28 @@ chargers:
     type: custom
     status:
       source: http
-      uri: http://localhost:9021/charger/status
+      uri: http://localhost:9026/charger/status
       method: GET
       headers:
         content-type: application/json
       timeout: 10s
     enabled:
       source: http
-      uri: http://localhost:9021/charger/enabled
+      uri: http://localhost:9026/charger/enabled
       method: GET
       headers:
         content-type: application/json
       timeout: 10s
     enable:
       source: http
-      uri: http://localhost:9021/charger/enable
+      uri: http://localhost:9026/charger/enable
       method: POST
       headers:
         content-type: text/plain
       timeout: 10s
     maxcurrent:
       source: http
-      uri: http://localhost:9021/charger/maxcurrent
+      uri: http://localhost:9026/charger/maxcurrent
       method: POST
       headers:
         content-type: text/plain
@@ -135,8 +146,4 @@ loadpoints:
     charger: charger1
     vehicle: vehicle1
     meter: wallbox1
-tariffs:
-  currency: EUR
-  grid:
-    type: fixed
-    price: 0.35
+    mode: 'off'
