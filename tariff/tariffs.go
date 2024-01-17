@@ -54,7 +54,7 @@ func (t *Tariffs) CurrentCo2() (float64, error) {
 
 // outdatedError returns api.ErrOutdated if t is older than 2*d
 func outdatedError(t time.Time, d time.Duration) error {
-	if time.Since(t) > 2*d {
+	if util.GetGlobalClock().Now().Sub(t) > 2*d {
 		return api.ErrOutdated
 	}
 	return nil
