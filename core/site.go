@@ -743,7 +743,7 @@ func (site *Site) update(lp Updater) {
 
 		var rate api.Rate
 		if err == nil {
-			rate, err = rates.Current(time.Now())
+			rate, err = rates.Current(util.GetGlobalClock().Now())
 		}
 
 		if err == nil {

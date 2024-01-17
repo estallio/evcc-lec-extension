@@ -72,7 +72,7 @@ func (t *Awattar) run(done chan error) {
 		once.Do(func() { close(done) })
 
 		t.mux.Lock()
-		t.updated = time.Now()
+		t.updated = util.GetGlobalClock().Now()
 
 		t.data = make(api.Rates, 0, len(res.Data))
 		for _, r := range res.Data {

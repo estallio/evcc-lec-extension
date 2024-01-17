@@ -63,7 +63,7 @@ export default class EV {
         app.use(bodyParser.text())
 
 
-      app.get('/charger/status', (req, res) => {
+        app.get('/charger/status', (req, res) => {
             res.send(this.status); //Does not want a JSON response for some reason
         });
 

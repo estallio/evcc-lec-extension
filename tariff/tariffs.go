@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/evcc-io/evcc/api"
+	"github.com/evcc-io/evcc/util"
 	"golang.org/x/text/currency"
 )
 
@@ -25,7 +26,7 @@ func NewTariffs(currency currency.Unit, grid, feedin, co2 api.Tariff, planner ap
 func currentPrice(t api.Tariff) (float64, error) {
 	if t != nil {
 		if rr, err := t.Rates(); err == nil {
-			if r, err := rr.Current(time.Now()); err == nil {
+			if r, err := rr.Current(util.GetGlobalClock().Now()); err == nil {
 				return r.Price, nil
 			}
 		}
