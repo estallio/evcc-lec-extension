@@ -20,6 +20,7 @@ for (const household of householdsConfig) {
     evccConfig.site = {
         title: household.name,
         centralClockPort: centralClockPort,
+        smartCostLimit: 0.03,
         meters: {
             grid: "smartMeter",
             pv: "pv1",

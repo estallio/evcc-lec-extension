@@ -99,7 +99,11 @@ export default class EV {
         });
 
         app.get('/vehicle/soc', (req, res) => {
-            res.json(this.SoCInKWh / this.batterySizeInKWh);
+            if (this.batterySizeInKWh === 0) {
+                res.json(0);
+            }else {
+                res.json(this.SoCInKWh / this.batterySizeInKWh);
+            }
         });
 
         app.get('/vehicle/status', (req, res) => {

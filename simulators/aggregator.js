@@ -14,7 +14,7 @@ function awattarDataObject(startTime, endTime, price) {
     };
 }
 
-function createTariffObject(result_arr, startDate, endDate) {
+function createTariffObject(result_arr, startDate) {
     let results_cleaned = [];
 
     for (const v of result_arr) {
@@ -63,28 +63,26 @@ export default class Aggregator {
         app.get("/v1/marketdata", async (req, res) => {
             let start = this.time.clone();
             start.set({ minute: 0, second: 0, millisecond: 0 });
-            let end = start.clone();
-            end.add(1, "d");
 
-            console.log(`${start.toDate()} --- ${end.toDate()}`);
-            res.json(await fetchData(this, start.clone(), end.clone()));
+            console.log(`Call for: ${start.toDate()}`);
+            res.json(await fetchData(this, start.clone()));
         });
 
         app.listen(3333, () => {
             console.log(`Aggregator simulator listening on port ${3333}`);
         });
-
-
     }
 
     setCurrentStartTime(time) {
         this.time = time;
     }
 
-    getGridPower(startDate, endDate) {
+    getGridPower(startDate) {
         let timeResolution = "1h";
         let startDay = startDate.clone();
-        let endDay = startDay.clone().add(1, "d");
+        let endDay = startDate.clone();
+        startDay.add(-1, "d");
+        console.log(`${startDay.toISOString()} to ${endDay.toISOString()}`);
         let fluxQuery = `
         myAggregateT = ${timeResolution}
         myStartT = ${startDay.toISOString()}
@@ -97,7 +95,8 @@ export default class Aggregator {
           |> range(start: myStartT, stop: myStopT)
           |> filter(fn: (r) => r["_measurement"] == "gridPower")
           |> filter(fn: (r) => r["_field"] == "value")
-          |> aggregateWindow(every: myAggregateT, fn: mean, createEmpty: false)
+          |> aggregateWindow(every: myAggregateT, fn: mean, createEmpty: true)
+          |> fill(column: "_value", value: 0.0)
           |> keep(columns: ["_time","_value"])
         `;
         }
@@ -112,31 +111,38 @@ export default class Aggregator {
           |> sum()
           |> group()`;
 
+        //console.log(fluxQuery);
+
         return new Promise((resolve, reject) => {
             let results_query = [];
             this.queryClient.queryRows(fluxQuery, {
                 next: (row, tableMeta) => {
                     const tableObject = tableMeta.toObject(row);
                     results_query.push(tableObject._value);
-                }, error: (error) => {
+                },
+                error: (error) => {
                     console.error("\nError", error);
                     reject(error);
-                }, complete: () => {
-                    resolve(createTariffObject(results_query, startDate, endDate));
-                }
+                },
+                complete: () => {
+                    if (results_query.length === 0) {
+                        results_query = new Array(360).fill(1);
+                    }
+                    resolve(createTariffObject(results_query, startDate));
+                },
             });
         });
     }
 }
 
-async function fetchData(aggregator, start, end) {
+async function fetchData(aggregator, start) {
     try {
         // Code here will execute after the query is complete
-        return await aggregator.getGridPower(start, end);
+        return await aggregator.getGridPower(start);
     } catch (error) {
         // Handle errors
         console.error("Error fetching data:", error);
     }
 }
 
-// new Aggregator(moment("2012-11-30T00:00:00+01:00"), 3);
+//new Aggregator(moment("2012-11-30T00:00:00+01:00"), 3);
