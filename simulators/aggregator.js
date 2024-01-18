@@ -7,8 +7,8 @@ dotenv.config();
 
 function awattarDataObject(startTime, endTime, price) {
     return {
-        start_timestamp: startTime.unix(),
-        end_timestamp: endTime.unix(),
+        start_timestamp: startTime.unix() * 1000,
+        end_timestamp: endTime.unix() * 1000,
         marketprice: price,
         unit: "Eur/MWh",
     };
@@ -33,11 +33,10 @@ function createTariffObject(result_arr, startDate, endDate) {
         results_nominated.push(Math.round((v / max_element) * 100));
     }
 
-    let startDateTemp = moment("2024-01-17T00:00:00+01:00");
-    startDateTemp.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
+    let startDateTemp = startDate.clone();
+    let endDateTemp = startDateTemp.clone();
     console.log(`Return ${startDateTemp.toDate()}`);
     let awattarArr = [];
-    let endDateTemp = startDateTemp.clone();
     for (const v of results_nominated) {
         endDateTemp.add(1, "h");
         awattarArr.push(awattarDataObject(startDateTemp, endDateTemp, v));
@@ -63,7 +62,7 @@ export default class Aggregator {
 
         app.get("/v1/marketdata", async (req, res) => {
             let start = this.time.clone();
-            start.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
+            start.set({ minute: 0, second: 0, millisecond: 0 });
             let end = start.clone();
             end.add(1, "d");
 
@@ -85,7 +84,6 @@ export default class Aggregator {
     getGridPower(startDate, endDate) {
         let timeResolution = "1h";
         let startDay = startDate.clone();
-        startDay.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
         let endDay = startDay.clone().add(1, "d");
         let fluxQuery = `
         myAggregateT = ${timeResolution}
