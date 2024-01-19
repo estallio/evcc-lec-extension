@@ -57,7 +57,7 @@ func (t *Awattar) run(done chan error) {
 	bo := newBackoff()
 	client := request.NewHelper(t.log)
 
-	for ; true; <-time.Tick(time.Hour) {
+	for ; true; <-util.GetGlobalClock().Tick(time.Hour) {
 		var res awattar.Prices
 
 		if err := backoff.Retry(func() error {
@@ -72,7 +72,7 @@ func (t *Awattar) run(done chan error) {
 		once.Do(func() { close(done) })
 
 		t.mux.Lock()
-		t.updated = time.Now()
+		t.updated = util.GetGlobalClock().Now()
 
 		t.data = make(api.Rates, 0, len(res.Data))
 		for _, r := range res.Data {

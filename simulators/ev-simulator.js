@@ -63,7 +63,7 @@ export default class EV {
         app.use(bodyParser.text())
 
 
-      app.get('/charger/status', (req, res) => {
+        app.get('/charger/status', (req, res) => {
             res.send(this.status); //Does not want a JSON response for some reason
         });
 
@@ -99,7 +99,11 @@ export default class EV {
         });
 
         app.get('/vehicle/soc', (req, res) => {
-            res.json(this.SoCInKWh / this.batterySizeInKWh);
+            if (this.batterySizeInKWh === 0) {
+                res.json(0);
+            }else {
+                res.json(this.SoCInKWh / this.batterySizeInKWh);
+            }
         });
 
         app.get('/vehicle/status', (req, res) => {
@@ -112,7 +116,7 @@ export default class EV {
 
         app.listen(this.port, () => {
           console.log(`ev simulator listening on port ${this.port}`);
-        })
+        });
     }
 
     update(timespan) {
@@ -134,7 +138,7 @@ export default class EV {
         this.currentSeconds += timespan;
 
         if ((speed !== 0 || location !== 'Home') && this.status !== 'A') {
-            // car is not at home or driving around - unplug automatically if connected            
+            // car is not at home or driving around - unplug automatically if connected
             this.status = 'A';
             this.enabled = false;
             this.currentPower = 0;

@@ -1,6 +1,7 @@
 import fs from 'fs';
-import Smooth from './utils/Smooth.js';
 import express from 'express';
+
+import Smooth from './utils/Smooth.js';
 
 export default class Consumption {
     constructor(config) {

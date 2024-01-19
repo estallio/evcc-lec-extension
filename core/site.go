@@ -3,7 +3,10 @@ package core
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math"
+	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -57,7 +60,8 @@ type Site struct {
 	log *util.Logger
 
 	// configuration
-	Title                             string       `mapstructure:"title"`         // UI title
+	Title                             string       `mapstructure:"title"` // UI title
+	CentralClockPort                  int32        `mapstructure:"centralClockPort"`
 	Voltage                           float64      `mapstructure:"voltage"`       // Operating voltage. 230V for Germany.
 	ResidualPower                     float64      `mapstructure:"residualPower"` // PV meter only: household usage. Grid meter: household safety margin
 	Meters                            MetersConfig // Meter references
@@ -86,6 +90,7 @@ type Site struct {
 	batterySoc   float64 // Battery soc
 
 	publishCache map[string]any // store last published values to avoid unnecessary republishing
+
 }
 
 // MetersConfig contains the loadpoint's meter configuration
@@ -738,7 +743,7 @@ func (site *Site) update(lp Updater) {
 
 		var rate api.Rate
 		if err == nil {
-			rate, err = rates.Current(time.Now())
+			rate, err = rates.Current(util.GetGlobalClock().Now())
 		}
 
 		if err == nil {
@@ -838,24 +843,60 @@ func (site *Site) loopLoadpoints(next chan<- Updater) {
 func (site *Site) Run(stopC chan struct{}, interval time.Duration) {
 	site.Health = NewHealth(time.Minute + interval)
 
-	if max := 30 * time.Second; interval < max {
-		site.log.WARN.Printf("interval <%.0fs can lead to unexpected behavior, see https://docs.evcc.io/docs/reference/configuration/interval", max.Seconds())
-	}
+	/*
+		if max := 30 * time.Second; interval < max {
+			site.log.WARN.Printf("interval <%.0fs can lead to unexpected behavior, see https://docs.evcc.io/docs/reference/configuration/interval", max.Seconds())
+		}
+	*/
 
 	loadpointChan := make(chan Updater)
 	go site.loopLoadpoints(loadpointChan)
 
-	ticker := time.NewTicker(interval)
-	site.update(<-loadpointChan) // start immediately
+	centralClockURL := "http://localhost:" + fmt.Sprint(site.CentralClockPort)
+	params := url.Values{}
+	params.Add("instanceName", site.Title)
+	centralClockURL = centralClockURL + "?" + params.Encode()
+	nextStepChan := make(chan string)
+
+	// before start, indicate that instance is ready by manually triggering the request
+	go makeHTTPRequest(centralClockURL, nextStepChan)
 
 	for {
 		select {
-		case <-ticker.C:
+		// wait until central clock simulator allows the next round
+		case <-nextStepChan:
+			// fetch all values in this round
 			site.update(<-loadpointChan)
+
+			// forward global clock
+			util.ForwardGlobalClock()
+
+			// wait for next round
+			go makeHTTPRequest(centralClockURL, nextStepChan)
 		case lp := <-site.lpUpdateChan:
 			site.update(lp)
 		case <-stopC:
 			return
 		}
 	}
+}
+
+func makeHTTPRequest(url string, respChan chan<- string) {
+
+	resp, err := http.Get(url)
+	if err != nil {
+		respChan <- "ERROR" // Signal an error to the main goroutine
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		respChan <- "ERROR" // Signal an error to the main goroutine
+		return
+	}
+
+	// Send the response to the main goroutine through the channel
+	respChan <- string(body)
 }

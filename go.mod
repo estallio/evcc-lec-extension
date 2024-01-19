@@ -106,6 +106,7 @@ require (
 )
 
 require (
+	bou.ke/monkey v1.0.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/ahmetb/go-linq/v3 v3.2.0 // indirect
@@ -173,6 +174,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/procodr/monkey v0.0.0-20221102224215-28eb53c3a645 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/procfs v0.11.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
@@ -185,6 +187,7 @@ require (
 	github.com/spf13/afero v1.9.5 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/teivah/onecontext v1.3.0 // indirect
+	github.com/tkuchiki/faketime v0.1.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -210,3 +213,5 @@ require (
 )
 
 replace github.com/grid-x/modbus => github.com/evcc-io/modbus v0.0.0-20230705160100-23e1df2c01c3
+
+replace github.com/evcc-io/evcc/util => /Users/leo/Documents/ove-einreichung/evcc-lec-extension/util

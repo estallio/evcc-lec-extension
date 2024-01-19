@@ -1,23 +1,39 @@
-log: debug
-interval: 1s
+simulationStepSize: 15000ms
+simulationStartTime: 2012-11-29T23:00:00.000Z
 site:
   title: Household 4
+  centralClockPort: 7199
+  smartCostLimit: 0.03
   meters:
-    grid: meter1
+    grid: smartMeter
     pv: pv1
     battery: battery1
+tariffs:
+  grid:
+    type: awattar
+    region: de
 influx:
   url: http://localhost:8086
   token: >-
-    Gdb3i0opdlrh-MEQEYfPO_2AvZlE3sxrnF2s206sM_Dh95yy_UKP-K1ckhuho0NbuMPXBhzoI5bcY9OFkBQqKA==
-  org: home
+    0snffkcyfyMQsY1y8Ref8l_vRaYUhaun8tObN9JZ-lzqGflIWvi6Fjz3pR4ut0TOMXlxckzcJNcRniTrFY_opw==
+  org: LECCO
   database: sim_4
 meters:
+  - name: smartMeter
+    type: custom
+    power:
+      source: http
+      uri: http://localhost:9019/residualPower
+      method: GET
+      headers:
+        content-type: application/json
+      scale: 1000
+      timeout: 10s
   - name: meter1
     type: custom
     power:
       source: http
-      uri: http://localhost:9015/meter/currentconsumption
+      uri: http://localhost:9018/meter/currentconsumption
       method: GET
       headers:
         content-type: application/json
@@ -27,7 +43,7 @@ meters:
     type: custom
     power:
       source: http
-      uri: http://localhost:9012/pv/currentproduction
+      uri: http://localhost:9015/pv/currentproduction
       method: GET
       headers:
         content-type: application/json
@@ -37,7 +53,7 @@ meters:
     type: custom
     power:
       source: http
-      uri: http://localhost:9013/meter/currentpower
+      uri: http://localhost:9016/meter/currentpower
       method: GET
       headers:
         content-type: application/json
@@ -47,7 +63,7 @@ meters:
     type: custom
     power:
       source: http
-      uri: http://localhost:9014/battery/currentpower
+      uri: http://localhost:9017/battery/currentpower
       method: GET
       headers:
         content-type: application/json
@@ -55,7 +71,7 @@ meters:
       timeout: 10s
     soc:
       source: http
-      uri: http://localhost:9014/battery/soc
+      uri: http://localhost:9017/battery/soc
       method: GET
       headers:
         content-type: application/json
@@ -63,20 +79,20 @@ meters:
       timeout: 10s
     energy:
       source: http
-      uri: http://localhost:9014/battery/energy
+      uri: http://localhost:9017/battery/energy
       method: GET
       headers:
         content-type: application/json
       timeout: 10s
-    capacity: 50
+    capacity: 0
 vehicles:
   - name: vehicle1
     title: Vehicle 1
     type: custom
-    capacity: 10
+    capacity: 60
     soc:
       source: http
-      uri: http://localhost:9013/vehicle/soc
+      uri: http://localhost:9016/vehicle/soc
       method: GET
       headers:
         content-type: application/json
@@ -84,14 +100,14 @@ vehicles:
       timeout: 10s
     status:
       source: http
-      uri: http://localhost:9013/vehicle/status
+      uri: http://localhost:9016/vehicle/status
       method: GET
       headers:
         content-type: application/json
       timeout: 10s
     range:
       source: http
-      uri: http://localhost:9013/vehicle/range
+      uri: http://localhost:9016/vehicle/range
       method: GET
       headers:
         content-type: application/json
@@ -101,28 +117,28 @@ chargers:
     type: custom
     status:
       source: http
-      uri: http://localhost:9013/charger/status
+      uri: http://localhost:9016/charger/status
       method: GET
       headers:
         content-type: application/json
       timeout: 10s
     enabled:
       source: http
-      uri: http://localhost:9013/charger/enabled
+      uri: http://localhost:9016/charger/enabled
       method: GET
       headers:
         content-type: application/json
       timeout: 10s
     enable:
       source: http
-      uri: http://localhost:9013/charger/enable
+      uri: http://localhost:9016/charger/enable
       method: POST
       headers:
         content-type: text/plain
       timeout: 10s
     maxcurrent:
       source: http
-      uri: http://localhost:9013/charger/maxcurrent
+      uri: http://localhost:9016/charger/maxcurrent
       method: POST
       headers:
         content-type: text/plain
@@ -135,8 +151,4 @@ loadpoints:
     charger: charger1
     vehicle: vehicle1
     meter: wallbox1
-tariffs:
-  currency: EUR
-  grid:
-    type: fixed
-    price: 0.35
+    mode: minpv

@@ -54,7 +54,7 @@ func NewInfluxClient(url, token, org, user, password, database string) *Influx {
 
 	return &Influx{
 		log:      log,
-		clock:    clock.New(),
+		clock:    util.GetGlobalClock(),
 		client:   client,
 		org:      org,
 		database: database,

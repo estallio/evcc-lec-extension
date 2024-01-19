@@ -275,7 +275,7 @@ func NewLoadpointFromConfig(log *util.Logger, other map[string]interface{}) (*Lo
 
 // NewLoadpoint creates a Loadpoint with sane defaults
 func NewLoadpoint(log *util.Logger) *Loadpoint {
-	clock := clock.New()
+	clock := util.GetGlobalClock()
 	bus := evbus.New()
 
 	lp := &Loadpoint{

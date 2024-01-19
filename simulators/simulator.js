@@ -1,13 +1,23 @@
 import moment from 'moment';
-import exec from 'child_process';
+import express from 'express';
+import _ from 'lodash';
 
-import config from './simulation-configs.js';
+import {
+    generateHouseholdsConfig,
+    generateCommunityConfigs,
+    setupInfluxForHousehold,
+    simulationDelay,
+    simulationStepSize,
+    simulationStartTime,
+    centralClockPort,
+} from './simulation-configs.js';
 
 import Battery from './battery-simulator.js';
 import PV from './pv-simulator.js';
 import Consumption from './consumption-simulator.js';
 import EV from './ev-simulator.js';
 import SmartMeter from "./smart-meter-simulator.js";
+import Aggregator from "./aggregator.js";
 
 import InfluxWrite from "./influx-write.js";
 
@@ -16,19 +26,20 @@ function Sleep(milliseconds) {
 }
 
 (async () => {
-    const {households: householdsConfig} = await config;
+    const householdsConfig = generateHouseholdsConfig();
 
     const households = [];
+    const communitiyInfras = []
+
+    const communityConfig = generateCommunityConfigs();
+    let communityInfra = [];
 
     // setup all households from config file
     for (const householdConfig of householdsConfig) {
-
         const household = {};
-
-        household.infux = new InfluxWrite(householdConfig.influx);
-
+        await setupInfluxForHousehold(householdConfig); // generates an influx-bucket for a single household
+        household.influx = new InfluxWrite(householdConfig.influx);
         household.smartMeter = new SmartMeter(householdConfig.smartMeter);
-
         household.consumptions = [];
         for (const consumptionConfig of householdConfig.consumptions) {
             const consumption = new Consumption(consumptionConfig);
@@ -53,18 +64,64 @@ function Sleep(milliseconds) {
             household.evs.push(ev);
         }
 
-        households.push(household)
+        household.name = householdConfig.name;
+        households.push(household);
     }
 
-    const simulationTime = moment('2021-09-01T00:00:00');
+    for (const config of communityConfig) {
+        const infra = {};
+        await setupInfluxForHousehold(config); // generates an influx-bucket for a single household
 
-    exec.exec(`date -s "${simulationTime.format("YYYY-MM-DD HH:mm")}"`);
+        infra.influx = new InfluxWrite(config.influx);
+        infra.smartMeter = new SmartMeter(config.smartMeter);
+        infra.consumptions = [];
+        for (const consumptionConfig of config.consumptions) {
+            const consumption = new Consumption(consumptionConfig);
+            infra.consumptions.push(consumption);
+        }
 
-    // simulation loop
-    for (let i = 0; i < 7 * 24 * 60; i++) {
-        simulationTime.add(60, 'seconds');
+        infra.pvs = [];
+        for (const pvConfig of config.pvs) {
+            const pv = new PV(pvConfig);
+            infra.pvs.push(pv);
+        }
 
-        console.log(simulationTime.toDate());
+        infra.batteries = [];
+        for (const batteryConfig of config.batteries) {
+            const battery = new Battery(batteryConfig);
+            infra.batteries.push(battery);
+        }
+
+        infra.evs = [];
+        for (const evConfig of config.evs) {
+            const ev = new EV(evConfig);
+            infra.evs.push(ev);
+        }
+
+        infra.name = config.name;
+
+        communitiyInfras.push(infra);
+    }
+
+
+
+    const simulationTime = moment(simulationStartTime);
+
+    let aggregator = new Aggregator(simulationTime.clone(), householdsConfig.length);
+    console.log("Starting simulation...");
+
+    let lastTime = simulationTime.clone();
+
+    setInterval(() => {
+        console.log("Simulation time: " + simulationTime.toDate(), "Simulation speed: " + simulationTime.diff(lastTime, 'minutes') + " min/s");
+        lastTime = simulationTime.clone();
+    }, 1000);
+
+    // be careful: input parameters are in seconds and milliseconds
+
+    const simulateOneStep = async () => {
+        // console.log("Simulation time: " + simulationTime.toDate());
+        let residualEnergyInKWhCommunity = 0;
 
         for (const household of households) {
             let residualEnergyInKWh = 0;
@@ -72,48 +129,131 @@ function Sleep(milliseconds) {
             // consumption and pv production are fixed and can not be changed
             // for this reason, we get the consumption and production data first and secondly give the battery the chance to charge
             // this strategy neglects the ev charging at first and priorizes the battery charging
-
             let currentConsumptionPower = 0;
             for (const consumption of household.consumptions) {
-                residualEnergyInKWh += consumption.update(60);
+                residualEnergyInKWh += consumption.update(simulationStepSize / 1000); // to seconds
                 currentConsumptionPower += consumption.getCurrentPower();
 
-                //await household.infux.updateDB("sm1", "Smart_Meter_Reading", "power", consumptionPower, simulationTime.toDate())
+                household.influx.updateDB("sm1", "Smart_Meter_Reading", "power", currentConsumptionPower, simulationTime.toDate());
             }
 
             let currentPvPower = 0;
             for (const pv of household.pvs) {
-                residualEnergyInKWh += pv.update(60);
+                residualEnergyInKWh += pv.update(simulationStepSize / 1000); // to seconds
                 currentPvPower += pv.getCurrentPower();
 
-                //await household.infux.updateDB("pv1", "PV_Inverter_Reading", "power", pvPower, simulationTime.toDate())
+                household.influx.updateDB("pv1", "PV_Inverter_Reading", "power", currentPvPower, simulationTime.toDate())
             }
 
             let currentBatteryPower = 0;
             for (const battery of household.batteries) {
                 // changes the residual value, therefore no '+='
-                residualEnergyInKWh = battery.update(60, residualEnergyInKWh);
+                residualEnergyInKWh = battery.update(simulationStepSize / 1000, residualEnergyInKWh); // to seconds
                 currentBatteryPower += battery.getCurrentPower();
-                
-                // const batterySoC = battery.getCurrentSoC();
-                //await household.infux.updateDB("bat1", "Battery_Meter", "power", batteryPower, simulationTime.toDate())
-                //await household.infux.updateDB("bat1", "Battery_Meter", "soc", batterySoC, simulationTime.toDate())
+
+                // const currentBatterySoC = battery.getCurrentSoC();
+                // await household.influx.updateDB("bat1", "Battery_Meter", "soc", currentBatterySoC, simulationTime.toDate())
+                household.influx.updateDB("bat1", "Battery_Meter", "power", currentBatteryPower, simulationTime.toDate())
             }
 
             let currentEvChargingPower = 0;
             for (const ev of household.evs) {
-                residualEnergyInKWh += ev.update(60);
+                residualEnergyInKWh += ev.update(simulationStepSize / 1000); // to seconds
                 currentEvChargingPower += ev.getCurrentPower();
             }
 
             household.smartMeter.setResidualPower(-(currentConsumptionPower + currentPvPower + currentBatteryPower + currentEvChargingPower));
+            residualEnergyInKWhCommunity += residualEnergyInKWh
 
-            //await household.infux.updateDB("resid", "Residual_Meter", "energy", residualEnergyInKWh, simulationTime.toDate())
-            //await household.infux.updateDB("resid", "Residual_Meter", "power", residualEnergyInKWh/(60 / 3600), simulationTime.toDate())
-
-            exec.exec(`date -s "${simulationTime.format("YYYY-MM-DD HH:mm")}"`);
-
-            await Sleep("100");
+            household.influx.updateDB("resid", "Residual_Meter", "energy", residualEnergyInKWh, simulationTime.toDate())
+            household.influx.updateDB("resid", "Residual_Meter", "power", residualEnergyInKWh/((simulationStepSize / 1000) / 3600), simulationTime.toDate())
         }
-    }
+
+        for (const infra of communitiyInfras) {
+            let residualEnergyInKWh = 0;
+
+            let currentPvPower = 0;
+            for (const pv of infra.pvs) {
+                residualEnergyInKWh += pv.update(simulationStepSize / 1000); // to seconds
+                residualEnergyInKWhCommunity += residualEnergyInKWh;
+                currentPvPower += pv.getCurrentPower();
+                infra.influx.updateDB("pv1", "PV_Inverter_Reading", "power", currentPvPower, simulationTime.toDate())
+            }
+
+            let currentBatteryPower = 0;
+            for (const battery of infra.batteries) {
+                // changes the residual value, therefore no '+='
+                residualEnergyInKWh = battery.update(simulationStepSize / 1000, residualEnergyInKWhCommunity); // to seconds
+                residualEnergyInKWhCommunity = residualEnergyInKWh;
+                currentBatteryPower += battery.getCurrentPower();
+
+                // const currentBatterySoC = battery.getCurrentSoC();
+                // await household.influx.updateDB("bat1", "Battery_Meter", "soc", currentBatterySoC, simulationTime.toDate())
+                infra.influx.updateDB("bat1", "Battery_Meter", "power", currentBatteryPower, simulationTime.toDate())
+            }
+
+
+            infra.smartMeter.setResidualPower(-(currentPvPower + currentBatteryPower));
+
+            infra.influx.updateDB("resid", "Residual_Meter", "energy", residualEnergyInKWh, simulationTime.toDate())
+            infra.influx.updateDB("resid", "Residual_Meter", "power", residualEnergyInKWh/((simulationStepSize / 1000) / 3600), simulationTime.toDate())
+        }
+
+
+
+        simulationTime.add(simulationStepSize, 'millisecond');
+        aggregator.setCurrentStartTime(simulationTime.clone());
+
+        if (simulationDelay !== 0) {
+            await Sleep(simulationDelay);
+        }
+    };
+
+
+    // setup centralClock
+    const app = express();
+
+    let firstTime = true;
+
+    // const instanceNames = households.map(h => h.name);
+    let waitingInstances = new Map();
+
+    app.get('/', async (req, res) => {
+        const instanceName = req.query.instanceName;
+
+        let instanceResolve;
+        const instancePromise = new Promise((resolve, reject) => {
+            instanceResolve = resolve;
+        });
+        instancePromise.resolve = instanceResolve;
+
+        waitingInstances.set(instanceName, instancePromise);
+
+        // check if all the other instances are already waiting
+        if (waitingInstances.size >= households.length + communitiyInfras.length) {
+            // first request-round is to wait for all instances
+            if (firstTime) {
+                firstTime = false;
+            } else {
+                // execute one simulation step
+                await simulateOneStep();
+            }
+
+            // resume all waiting instances
+            waitingInstances.forEach((value, key, map) => value.resolve());
+
+            // reset map
+            waitingInstances = new Map();
+        }
+
+        // wait for the simulation step
+        await instancePromise;
+
+        // answer request
+        res.json();
+    });
+
+    app.listen(centralClockPort, () => {
+        console.log(`centralClock listening on port ${centralClockPort}`);
+    });
 })();

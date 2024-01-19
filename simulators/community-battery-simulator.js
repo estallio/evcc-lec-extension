@@ -1,6 +1,6 @@
-import express from "express";
+import express from 'express';
 
-export default class Battery {
+export default class CommunityBattery {
   constructor(config) {
     this.batterySizeInKWh = config.batterySizeInKWh;
     this.maxDischargeRateInKW = config.maxDischargeRateInKW;
@@ -24,7 +24,7 @@ export default class Battery {
         if (this.batterySizeInKWh === 0) {
             res.json(0);
         }else {
-        res.json(this.SoCInKWh / this.batterySizeInKWh);
+            res.json(this.SoCInKWh / this.batterySizeInKWh);
         }
     });
 
