@@ -2,16 +2,21 @@ simulationStepSize: 15000ms
 simulationStartTime: 2012-11-29T23:00:00.000Z
 site:
   title: Household 6
-  centralClockPort: 7069
+  centralClockPort: 7199
+  smartCostLimit: 0.03
   meters:
     grid: smartMeter
     pv: pv1
     battery: battery1
+tariffs:
+  grid:
+    type: awattar
+    region: de
 influx:
   url: http://localhost:8086
   token: >-
-    3kzcwoK7Oy7Gyf-2jQyuVz8jP-QHUFoU9-x_xDjz-GSTKXdK_uo56QVMkiEBTFxCKTL7fN-y3QwyKPT6ogH1fw==
-  org: org
+    0snffkcyfyMQsY1y8Ref8l_vRaYUhaun8tObN9JZ-lzqGflIWvi6Fjz3pR4ut0TOMXlxckzcJNcRniTrFY_opw==
+  org: LECCO
   database: sim_6
 meters:
   - name: smartMeter
@@ -79,7 +84,7 @@ meters:
       headers:
         content-type: application/json
       timeout: 10s
-    capacity: 10
+    capacity: 4
 vehicles:
   - name: vehicle1
     title: Vehicle 1
@@ -146,4 +151,4 @@ loadpoints:
     charger: charger1
     vehicle: vehicle1
     meter: wallbox1
-    mode: 'off'
+    mode: minpv

@@ -78,14 +78,14 @@ async function setupInfluxForHousehold(household) {
     }
 }
 
-function createHouseholdObject(num, webPort, pvP, pvAzimuth, pvPort, evLocation, evDistance, evPort, evBatteryKwH, batteryPort, batteryKwH, consumptionFile, consumptionPort, influxBucket, smartMeterPort) {
+function createHouseholdObject(name, num, webPort, pvP, pvAzimuth, pvPort, evLocation, evDistance, evPort, evBatteryKwH, batteryPort, batteryKwH, consumptionFile, consumptionPort, influxBucket, smartMeterPort) {
 
     const influxInstance = process.env.INFLUX_INSTANCE;
     const influxToken = process.env.INFLUX_TOKEN;
     const influxOrganisation = process.env.INFLUX_ORGANISATION;
 
     return {
-        name: `Household ${num}`, port: webPort, pvs: [{
+        name: `${name} ${num}`, port: webPort, pvs: [{
             file: `./production_values/pv_sim_export_${pvP}_${pvAzimuth}_45.json`, port: pvPort
         }], evs: [{
             chargingEfficiency: 0.95,
@@ -129,8 +129,6 @@ function generateHouseholdsConfig() {
     let evccSimulatedDevicePortNumber = 9000;
 
     // the simulation data from the Load Profile Generator were iterated over a specific naming comventaion
-    let pvPeakPower = 4000;
-
     // every house gets a PV
     let pvAzimuth = [0, 90, 180, 270, 0, 0, 90, 180, 270, 90, 0, 90, 180, 270, 180, 0, 90, 180, 270, 270, 0, 90, 180, 270, 0];
 
@@ -144,7 +142,9 @@ function generateHouseholdsConfig() {
         for (let j = 1; j <= 4; j++) {
             evccInstanceNumber += 1;
 
-            let household = createHouseholdObject(evccInstanceNumber, // evcc instance number
+            let household = createHouseholdObject(
+                "Household",
+                evccInstanceNumber, // evcc instance number
                 evccInstancePort++, // evcc instance port
                 pv_kWp[evccInstanceNumber - 1]*1000, // pv peak power
                 pvAzimuth[evccInstanceNumber - 1], // pv azimuth
@@ -165,8 +165,6 @@ function generateHouseholdsConfig() {
 
             console.log("Generated household number: ", evccInstanceNumber);
         }
-
-        pvPeakPower += 2000;
     }
 
     fs.writeFile("sim.json", JSON.stringify(households), (err) => {
@@ -176,3 +174,55 @@ function generateHouseholdsConfig() {
     return households;
 }
 
+export function generateCommunityConfigs() {
+
+    // collect all evcc instances in a households variable
+    let communityInf = [];
+
+    // iterate variables for the respective evcc simulation environment
+    // all variables are increasing for every simulation environment
+    let evccInstanceNumber = 0;
+    let evccSimulatedDevicePortNumber = 9900;
+    let evccPort = 7095;
+
+    // the simulation data from the Load Profile Generator were iterated over a specific naming comventaion
+    // every house gets a PV
+    let pvAzimuth = [0, 90, 180, 270, 0, 0, 90, 180, 270, 90, 0, 90, 180, 270, 180, 0, 90, 180, 270, 270, 0, 90, 180, 270, 0];
+
+    console.log("Started household generation");
+
+    let pv_kWp = [40, 170];
+    let bat_kWh = [300, 500];
+    let ev_kWh = [50, 50];
+
+    for (let i = 1; i <= 1; i++) {
+        for (let j = 1; j <= 2; j++) {
+            evccInstanceNumber += 1;
+
+            let household = createHouseholdObject(
+                "Community",
+                evccInstanceNumber, // evcc instance number
+                evccPort++, // evcc instance port
+                pv_kWp[evccInstanceNumber - 1]*1000, // pv peak power
+                pvAzimuth[evccInstanceNumber - 1], // pv azimuth
+                evccSimulatedDevicePortNumber++, // pv simulator port
+                `${i} ${j}`, // house identification and number to find the simulation data file of the location of the respective ev
+                `${i} ${j}`, // house identification and number to find the simulation data file of the distances of the respective ev
+                evccSimulatedDevicePortNumber++, // ev simulator port
+                ev_kWh[evccInstanceNumber - 1], //ev battery size
+                evccSimulatedDevicePortNumber++, // battery simulator port
+                bat_kWh[evccInstanceNumber - 1], // household battery size
+                `${i}-HH_${j}`, // household consumption file
+                evccSimulatedDevicePortNumber++, // consumption simulator port
+                `com_sim_${evccInstanceNumber}`, // influx bucket name
+                evccSimulatedDevicePortNumber++ // smart meter simulator Port
+            );
+
+            communityInf.push(household);
+
+            console.log("Generated community inf number: ", evccInstanceNumber);
+        }
+    }
+
+    return communityInf;
+}
